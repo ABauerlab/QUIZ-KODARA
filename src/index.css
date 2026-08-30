@@ -26,12 +26,12 @@
            text-white transition active:scale-[.985] hover:border-mute;
   }
   .btn-primary {
-    @apply w-full rounded-2xl bg-acid px-4 py-4 text-center text-[16px] font-bold text-ink
-           transition active:scale-[.985] disabled:opacity-40;
+    @apply w-full rounded-2xl bg-brand px-4 py-4 text-center text-[16px] font-bold text-ink
+           transition active:scale-[.985] disabled:opacity-30;
   }
   .field {
     @apply w-full rounded-2xl border border-line bg-panel px-4 py-3.5 text-white
-           placeholder:text-mute outline-none focus:border-acid;
+           placeholder:text-mute outline-none focus:border-brand;
   }
 }
 

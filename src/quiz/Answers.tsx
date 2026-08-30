@@ -28,7 +28,7 @@ function Chip({
       onClick={onClick}
       className={
         'rounded-full border px-4 py-2 text-sm transition active:scale-95 ' +
-        (active ? 'border-acid bg-acid font-semibold text-ink' : 'border-line bg-panel text-white')
+        (active ? 'border-brand bg-brand font-semibold text-ink' : 'border-line bg-panel text-white')
       }
     >
       {children}

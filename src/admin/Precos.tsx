@@ -105,7 +105,7 @@ export default function Precos({ supabase }: { supabase: SupabaseClient }) {
         </p>
       </div>
 
-      {msg && <p className="text-sm text-acid">{msg}</p>}
+      {msg && <p className="text-sm text-brand">{msg}</p>}
 
       <div className="grid gap-2">
         {rows.map((row) => (
@@ -152,7 +152,7 @@ export default function Precos({ supabase }: { supabase: SupabaseClient }) {
             />
             <div className="flex gap-2">
               <button
-                className="rounded-full bg-acid px-4 py-2 text-sm font-semibold text-ink"
+                className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-ink"
                 onClick={() => void salvar(row)}
               >
                 Salvar
@@ -168,7 +168,7 @@ export default function Precos({ supabase }: { supabase: SupabaseClient }) {
         ))}
       </div>
 
-      <form onSubmit={criar} className="grid gap-2 rounded-2xl border border-acid/40 bg-acid/5 p-3">
+      <form onSubmit={criar} className="grid gap-2 rounded-2xl border border-white/15 bg-white/[0.03] p-3">
         <p className="text-sm font-semibold">Nova faixa</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <select

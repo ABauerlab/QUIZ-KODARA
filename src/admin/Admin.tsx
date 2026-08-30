@@ -22,8 +22,8 @@ function Login({ supabase }: { supabase: SupabaseClient }) {
 
   return (
     <form onSubmit={entrar} className="mx-auto grid w-full max-w-sm gap-3 px-4 py-16">
-      <h1 className="text-xl font-bold">Painel Kodara</h1>
-      <p className="text-sm text-mute">Acesso só pra quem cuida dos leads.</p>
+      <img src="/kodara-wordmark.webp" alt="Kodara" width={201} height={96} className="mb-1 h-7 w-auto" />
+      <p className="text-sm text-mute">Painel de leads. Acesso só pra quem cuida disso.</p>
       <input
         className="field"
         type="email"
@@ -89,8 +89,8 @@ export default function Admin() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Painel Kodara</h1>
-          <p className="text-xs text-mute">{session.user.email}</p>
+          <img src="/kodara-wordmark.webp" alt="Kodara" width={201} height={96} className="h-6 w-auto" />
+          <p className="mt-1 text-xs text-mute">Painel · {session.user.email}</p>
         </div>
         <button
           className="rounded-full border border-line px-4 py-2 text-sm text-mute"
@@ -107,7 +107,7 @@ export default function Admin() {
             onClick={() => setAba(t)}
             className={
               'rounded-full px-4 py-2 text-sm transition ' +
-              (aba === t ? 'bg-acid font-semibold text-ink' : 'border border-line text-mute')
+              (aba === t ? 'bg-brand font-semibold text-ink' : 'border border-line text-mute')
             }
           >
             {t === 'leads' ? 'Leads' : 'Tabela de preços'}

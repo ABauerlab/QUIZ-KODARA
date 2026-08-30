@@ -149,6 +149,55 @@ DTF abaixo disso. A técnica final fica decidida no atendimento humano.
 
 ---
 
+## Identidade visual
+
+A base é a logo da Kodara, o wordmark em handstyle de grafite, branco sobre preto.
+
+### Assets gerados
+
+Todos saíram da logo original por extração de alpha: a luminância do arquivo virou canal de
+transparência, então o traço branco funciona sobre qualquer fundo, sem quadrado preto em volta.
+
+| Arquivo | Onde entra |
+| --- | --- |
+| `kodara-wordmark.webp` (201x96, 6 kB) | header do quiz, fecho da tela final, painel admin |
+| `kodara-wordmark@2x.webp` (460x220, 16 kB) | reserva pra uso maior |
+| `kodara-k.webp` (35x96, 1 kB) | o K sozinho, como foto de contato no header |
+| `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png` | ícone de aba e de tela inicial |
+
+O favicon usa só o **K**, não o wordmark inteiro: em 16px a palavra toda vira borrão. O K foi
+recortado no vale entre ele e o O, então sai inteiro, com a perna, sem invadir a letra seguinte. O
+fundo escuro é assado no ícone de propósito, senão o traço branco sumiria numa aba de tema claro.
+
+No header o K aparece como avatar redondo e o wordmark como nome do contato, o que mantém a metáfora
+de conversa de WhatsApp em vez de virar um cabeçalho de site.
+
+### Paleta
+
+A logo é preto e branco puro, então a interface é monocromática. **O branco é a cor de ação**: botão
+primário, balão do usuário, barra de progresso.
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `ink` | `#0B0B0C` | fundo |
+| `panel` | `#141416` | balão do sistema, cards |
+| `line` | `#232326` | bordas e divisórias |
+| `mute` | `#8A8A90` | texto secundário |
+| `brand` | `#FFFFFF` | ações, destaque |
+
+**Nota:** a primeira versão usava um verde limão que eu tinha inventado, sem nenhuma base. Como a
+única evidência real de marca é a logo, e ela é monocromática, a interface passou a seguir isso. Se a
+Kodara tiver uma cor oficial, é só trocar o valor de `brand` em `tailwind.config.js`, uma linha, e
+todo o sistema acompanha.
+
+### Performance
+
+O wordmark e o K somam 7 kB e vão com `preload` no `<head>`, então o navegador descobre os dois antes
+do JS rodar. Ambos têm `width` e `height` fixos, então não existe salto de layout quando carregam. A
+logo do fecho da tela final é `loading="lazy"`, já que está fora da primeira dobra.
+
+---
+
 ## Frete real (SuperFrete)
 
 Depois do contato, o quiz pergunta o CEP e cota o frete de verdade. Peças e frete aparecem separados
@@ -311,9 +360,10 @@ Sobe **o conteúdo de dentro** da pasta `dist/` pra raiz do subdomínio `quiz.vi
 (normalmente `public_html/quiz` ou a pasta que o subdomínio aponta). Não sobe a pasta `dist` inteira,
 sobe o que tem dentro dela.
 
-O `.htaccess` já vai junto no `dist/`. Ele faz duas coisas: manda qualquer rota pro `index.html`, o
-que faz `/admin` funcionar mesmo se a pessoa der refresh, e liga cache longo nos arquivos com hash no
-nome.
+O `.htaccess` já vai junto no `dist/`. Ele manda qualquer rota pro `index.html`, o que faz `/admin`
+funcionar mesmo se a pessoa der refresh, e cuida do cache: um ano de `immutable` só nos arquivos que o
+Vite gera com hash no nome, e uma semana com revalidação na logo e nos ícones, que têm nome fixo. Se
+fossem `immutable`, trocar a logo não chegaria em quem já visitou o site.
 
 Se o `.htaccess` não aparecer no gerenciador de arquivos, liga a opção de mostrar arquivos ocultos.
 

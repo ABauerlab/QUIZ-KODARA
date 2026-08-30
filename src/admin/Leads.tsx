@@ -112,7 +112,7 @@ function Detalhe({
       <div className="mt-3 flex flex-wrap gap-2">
         {lead.whatsapp && (
           <a
-            className="rounded-full bg-acid px-4 py-2 text-sm font-semibold text-ink"
+            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-ink"
             href={`https://wa.me/55${phoneDigits(lead.whatsapp)}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -230,7 +230,7 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
             onClick={() => setStatus(valor)}
             className={
               'rounded-full px-4 py-2 text-sm transition ' +
-              (status === valor ? 'bg-acid font-semibold text-ink' : 'border border-line text-mute')
+              (status === valor ? 'bg-brand font-semibold text-ink' : 'border border-line text-mute')
             }
           >
             {rotulo}
@@ -300,7 +300,7 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
                       className={
                         'ml-2 rounded-full px-2 py-0.5 align-middle text-[11px] font-medium ' +
                         (l.status === 'incompleto'
-                          ? 'bg-amber-400/15 text-amber-300'
+                          ? 'bg-white/10 text-white/80'
                           : 'bg-line text-mute')
                       }
                     >
@@ -309,7 +309,7 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
                   )}
                 </p>
                 {l.status === 'incompleto' && (
-                  <p className="text-xs text-amber-300/80">
+                  <p className="text-xs text-white/70">
                     Parou em: {ETAPA_LABEL[l.etapa_atual ?? ''] ?? l.etapa_atual ?? 'início'}
                   </p>
                 )}
@@ -320,7 +320,7 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
                 </p>
                 {l.created_at && <p className="mt-1 text-xs text-mute">{formatDate(l.created_at)}</p>}
               </div>
-              <span className="shrink-0 text-sm font-semibold text-acid">
+              <span className="shrink-0 text-sm font-semibold text-brand">
                 {l.valor_total_com_frete
                   ? formatBRL(Number(l.valor_total_com_frete))
                   : l.valor_estimado

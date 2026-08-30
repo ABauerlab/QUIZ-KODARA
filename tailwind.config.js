@@ -8,7 +8,9 @@ export default {
         panel: '#141416',
         line: '#232326',
         mute: '#8A8A90',
-        acid: '#D6FF3F',
+        // A logo da Kodara e preto e branco puro. O branco e a cor de acao.
+        // Se um dia a marca adotar um accent oficial, e so trocar aqui.
+        brand: '#FFFFFF',
       },
       fontFamily: {
         sans: [

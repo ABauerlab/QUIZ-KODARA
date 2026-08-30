@@ -1,4 +1,4 @@
-# Hostinger / Apache: SPA fallback + cache dos assets com hash no nome.
+# Hostinger / Apache: SPA fallback + cache.
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
@@ -13,19 +13,19 @@
   AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
 
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType text/html "access plus 0 seconds"
-</IfModule>
-
 <IfModule mod_headers.c>
-  <FilesMatch "\.(js|css|woff2|webp|svg)$">
+  # Só o que o Vite gera com hash no nome pode ser immutable: trocar o arquivo
+  # troca a URL, então o navegador busca o novo sozinho.
+  <FilesMatch "\.(js|css|woff2)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
+
+  # Logo e ícones têm nome fixo. Se fossem immutable por um ano, trocar a logo
+  # não chegaria em quem já visitou o site. Uma semana com revalidação resolve.
+  <FilesMatch "\.(webp|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=604800, must-revalidate"
+  </FilesMatch>
+
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>

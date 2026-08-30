@@ -137,7 +137,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-acid/40 bg-acid/5 p-4">
+      <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-4">
         {valor ? (
           <>
             <div className="flex justify-between gap-4 text-sm">
@@ -154,9 +154,9 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
                     : 'a combinar'}
               </span>
             </div>
-            <div className="mt-3 border-t border-acid/30 pt-3">
+            <div className="mt-3 border-t border-white/10 pt-3">
               <p className="text-sm text-mute">Total estimado</p>
-              <p className="text-3xl font-black text-acid">{total ? formatBRL(total) : '...'}</p>
+              <p className="text-3xl font-black text-brand">{total ? formatBRL(total) : '...'}</p>
               {precoUnitario && (
                 <p className="mt-1 text-xs text-mute">{formatBRL(precoUnitario)} por peça</p>
               )}
@@ -165,7 +165,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         ) : (
           <>
             <p className="text-sm text-mute">Valor total</p>
-            <p className="text-2xl font-black text-acid">Valor sob consulta</p>
+            <p className="text-2xl font-black text-brand">Valor sob consulta</p>
             <p className="mt-1 text-xs text-mute">
               Sua combinação sai da tabela padrão. A gente fecha o valor direto com você.
             </p>
@@ -218,7 +218,18 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
             </button>
           </p>
         )}
-        <p className="mt-2 text-center text-xs text-mute">Sinta-se livre, vista Kodara!</p>
+        <div className="mt-3 flex flex-col items-center gap-1.5">
+          <img
+            src="/kodara-wordmark.webp"
+            alt="Kodara"
+            width={201}
+            height={96}
+            className="h-5 w-auto opacity-70"
+            loading="lazy"
+            decoding="async"
+          />
+          <p className="text-center text-xs text-mute">Sinta-se livre, vista Kodara!</p>
+        </div>
       </div>
     </div>
   )
