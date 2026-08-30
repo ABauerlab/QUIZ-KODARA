@@ -1,0 +1,38 @@
+{
+  "name": "quiz-kodara",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quiz de qualificacao de leads de Private Label da Kodara Streetwear",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/checar-env.mjs && tsc --noEmit && vite build",
+    "build:fast": "vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "admin:create": "node scripts/create-admin.mjs",
+    "build:demo": "tsc --noEmit && vite build",
+    "pacote": "npm run build && node scripts/empacotar.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ABauerlab/QUIZ-KODARA.git"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19",
+    "terser": "^5.51.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  }
+}

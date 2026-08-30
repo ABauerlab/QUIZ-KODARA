@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ink text-white font-sans antialiased;
+    /* Evita o "pulo" do teclado virtual empurrando o layout no mobile. */
+    overscroll-behavior-y: none;
+  }
+  /* Sem zoom automatico no iOS ao focar input. */
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply w-full rounded-2xl border border-line bg-panel px-4 py-3.5 text-left text-[15px] leading-snug
+           text-white transition active:scale-[.985] hover:border-mute;
+  }
+  .btn-primary {
+    @apply w-full rounded-2xl bg-brand px-4 py-4 text-center text-[16px] font-bold text-ink
+           transition active:scale-[.985] disabled:opacity-30;
+  }
+  .field {
+    @apply w-full rounded-2xl border border-line bg-panel px-4 py-3.5 text-white
+           placeholder:text-mute outline-none focus:border-brand;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

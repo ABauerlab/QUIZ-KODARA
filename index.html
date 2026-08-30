@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0B0C" />
+    <title>Private Label Kodara | Monte sua produção</title>
+    <meta
+      name="description"
+      content="Atendimento de Private Label da Kodara Streetwear. Responda rápido e saia com modelagem, estampa, quantidade e valor definidos."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
+    <style>
+      /* Ground color antes do CSS do bundle entrar, evita flash branco no mobile. */
+      html { background: #0b0b0c; color-scheme: dark; }
+    </style>
+    <script>
+      // Stub do Meta Pixel: enfileira eventos na hora, mas so baixa o fbevents.js
+      // quando o navegador estiver ocioso ou no primeiro toque, pra nao competir
+      // com a renderizacao da primeira tela.
+      !(function (f, b, e, v, n, t, s) {
+        if (f.fbq) return
+        n = f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+        }
+        if (!f._fbq) f._fbq = n
+        n.push = n
+        n.loaded = !0
+        n.version = '2.0'
+        n.queue = []
+        var loaded = false
+        function load() {
+          if (loaded) return
+          loaded = true
+          t = b.createElement(e)
+          t.async = !0
+          t.src = v
+          s = b.getElementsByTagName(e)[0]
+          s.parentNode.insertBefore(t, s)
+        }
+        f.addEventListener('pointerdown', load, { once: true, passive: true })
+        f.addEventListener('load', function () {
+          'requestIdleCallback' in f ? f.requestIdleCallback(load, { timeout: 2500 }) : setTimeout(load, 1200)
+        })
+      })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
+      fbq('init', '%VITE_META_PIXEL_ID%')
+      fbq('track', 'PageView')
+    </script>
+  </head>
+  <body class="bg-ink">
+    <div id="root"></div>
+    <noscript
+      ><img
+        height="1"
+        width="1"
+        style="display: none"
+        alt=""
+        src="https://www.facebook.com/tr?id=%VITE_META_PIXEL_ID%&ev=PageView&noscript=1"
+    /></noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
