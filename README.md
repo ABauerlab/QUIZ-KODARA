@@ -28,6 +28,9 @@ O SDK do Supabase (55 kB gzip) só baixa depois que a página já pintou.
 O passo a passo completo está em **[DEPLOY.md](DEPLOY.md)**: Supabase, login do painel, pacote e
 upload na Hostinger, com checklist de conferência no celular.
 
+Se preferir delegar, **[PROMPT-DEPLOY.md](PROMPT-DEPLOY.md)** tem um prompt pronto pra colar numa
+sessão com acesso a navegador, que executa esse roteiro inteiro.
+
 ---
 
 ## Rodando local
