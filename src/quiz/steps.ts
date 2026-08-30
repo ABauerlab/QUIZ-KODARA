@@ -12,6 +12,7 @@ export type StepId =
   | 'p9'
   | 'p10'
   | 'p11'
+  | 'p12'
   | 'final'
 
 export interface StepDef {
@@ -56,6 +57,11 @@ export const STEPS: StepDef[] = [
     prompts: ['Show, já tenho quase tudo. Como posso te chamar, e qual seu WhatsApp?'],
     counts: true,
   },
+  {
+    id: 'p12',
+    prompts: ['Qual seu CEP pra eu calcular o frete certinho?'],
+    counts: true,
+  },
   { id: 'final', prompts: [], counts: false },
 ]
 
@@ -94,6 +100,23 @@ export const MSG_MARCA_NOVA =
 
 export const MSG_DTF_AUTOMATICO =
   'Pra essa quantidade a gente trabalha com DTF, que libera produção a partir de 1 peça. Ótimo pra testar antes de produzir em escala.'
+
+/** Rótulo curto de cada etapa, pro painel dizer onde a pessoa parou. */
+export const ETAPA_LABEL: Record<string, string> = {
+  p1: 'Estágio da marca',
+  p2: 'Tipo de peça',
+  p3: 'Quantidade',
+  p4: 'Técnica de estampa',
+  p5: 'Modelagem',
+  p6: 'Cor da peça',
+  p7: 'Grade de tamanhos',
+  p8: 'Estampa pronta',
+  p9: 'Posição da estampa',
+  p10: 'Prazo',
+  p11: 'Nome e WhatsApp',
+  p12: 'CEP do frete',
+  final: 'Chegou no resumo',
+}
 
 export const MSG_UPLOAD = 'Manda o arquivo aqui que a gente já guarda junto com seu pedido.'
 

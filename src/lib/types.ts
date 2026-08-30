@@ -1,6 +1,7 @@
 export type EstagioMarca = 'existente' | 'nova'
 export type TecnicaEstampa = 'silk' | 'dtf' | 'indicacao'
 export type ModelagemStatus = 'pronta' | 'desenvolver'
+export type LeadStatus = 'incompleto' | 'completo' | 'contatado'
 
 export type GradeTamanhos = Record<string, number>
 
@@ -23,6 +24,14 @@ export interface Lead {
   whatsapp: string | null
   valor_estimado: number | null
   preco_unitario: number | null
+  cep_destino: string | null
+  valor_frete_calculado: number | null
+  valor_total_com_frete: number | null
+  /** Preenchido pelo banco, não vai no payload de salvamento. */
+  session_id?: string
+  status?: LeadStatus
+  etapa_atual?: string | null
+  updated_at?: string
 }
 
 export interface PrecoRow {
@@ -52,6 +61,9 @@ export const emptyLead: Lead = {
   whatsapp: null,
   valor_estimado: null,
   preco_unitario: null,
+  cep_destino: null,
+  valor_frete_calculado: null,
+  valor_total_com_frete: null,
 }
 
 export const TECNICA_LABEL: Record<TecnicaEstampa, string> = {
@@ -63,6 +75,12 @@ export const TECNICA_LABEL: Record<TecnicaEstampa, string> = {
 export const MODELAGEM_LABEL: Record<ModelagemStatus, string> = {
   pronta: 'Modelagem pronta',
   desenvolver: 'Desenvolver com a Kodara',
+}
+
+export const STATUS_LABEL: Record<LeadStatus, string> = {
+  incompleto: 'Abandonou no meio',
+  completo: 'Terminou o quiz',
+  contatado: 'Já contatado',
 }
 
 export const ESTAGIO_LABEL: Record<EstagioMarca, string> = {

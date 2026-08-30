@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { isValidPhone, maskPhone } from '../lib/format'
+import { isValidCep, isValidPhone, maskCep, maskPhone } from '../lib/format'
 import type { GradeTamanhos, Lead } from '../lib/types'
 
 export type Advance = (patch: Partial<Lead>, userText: string, interstitial?: string[]) => void
@@ -419,7 +419,36 @@ export function P11({ advance }: Props) {
         onChange={(e) => setTel(maskPhone(e.target.value))}
       />
       <button className="btn-primary" disabled={!ok}>
-        Ver meu resumo e valor
+        Continuar
+      </button>
+    </form>
+  )
+}
+
+export function P12({ advance }: Props) {
+  const [cep, setCep] = useState('')
+  const ok = isValidCep(cep)
+
+  return (
+    <form
+      className="grid gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!ok) return
+        advance({ cep_destino: cep }, cep)
+      }}
+    >
+      <input
+        className="field"
+        placeholder="00000-000"
+        inputMode="numeric"
+        autoComplete="postal-code"
+        value={cep}
+        onChange={(e) => setCep(maskCep(e.target.value))}
+      />
+      <p className="text-xs text-mute">Só pra calcular o frete até você. Nada de spam.</p>
+      <button className="btn-primary" disabled={!ok}>
+        Calcular meu total
       </button>
     </form>
   )

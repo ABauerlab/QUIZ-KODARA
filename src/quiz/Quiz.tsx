@@ -1,5 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Bubble, Header, Progress, Typing } from '../components/Chat'
+import { calcularFrete } from '../lib/frete'
+import { salvarParcial } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { calcularPreco, fetchTabelaPrecos } from '../lib/pricing'
 import { emptyLead, type Lead, type PrecoRow } from '../lib/types'
@@ -21,11 +23,21 @@ const Final = lazy(() => import('./Final'))
 
 type Current = 'abertura' | StepId
 
+export interface FreteState {
+  status: 'ocioso' | 'carregando' | 'ok' | 'falhou'
+  valor: number | null
+  servico: string | null
+  prazo_dias: number | null
+}
+
+const FRETE_INICIAL: FreteState = { status: 'ocioso', valor: null, servico: null, prazo_dias: null }
+
 export default function Quiz() {
   const [lead, setLead] = useState<Lead>(emptyLead)
   const [current, setCurrent] = useState<Current>('abertura')
   const [aguardandoUpload, setAguardandoUpload] = useState(false)
   const [precos, setPrecos] = useState<PrecoRow[]>([])
+  const [frete, setFrete] = useState<FreteState>(FRETE_INICIAL)
 
   const { messages, typing, ready, pushBot, pushUser } = useConversation()
   const fim = useRef<HTMLDivElement>(null)
@@ -55,6 +67,38 @@ export default function Quiz() {
     fim.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length, typing, current, aguardandoUpload])
 
+  /** Junta o que ja foi respondido com o que foi calculado, do jeito que vai pro banco. */
+  function comValores(base: Lead, freteAtual: FreteState = frete): Lead {
+    const p = calcularPreco(precos, base.tecnica_estampa, base.tipo_peca, base.quantidade)
+    const valorFrete = freteAtual.status === 'ok' ? freteAtual.valor : null
+    return {
+      ...base,
+      valor_estimado: p.total,
+      preco_unitario: p.unitario,
+      valor_frete_calculado: valorFrete,
+      valor_total_com_frete: p.total !== null ? Number((p.total + (valorFrete ?? 0)).toFixed(2)) : null,
+    }
+  }
+
+  /** Cota o frete assim que o CEP chega, pra tela final ja abrir com o numero. */
+  async function dispararFrete(base: Lead) {
+    if (!base.cep_destino || !base.tipo_peca || !base.quantidade) return
+    setFrete({ ...FRETE_INICIAL, status: 'carregando' })
+
+    const r = await calcularFrete({
+      cep_destino: base.cep_destino,
+      tipo_peca: base.tipo_peca,
+      quantidade: base.quantidade,
+    })
+
+    const proximo: FreteState = r.ok
+      ? { status: 'ok', valor: r.valor, servico: r.servico, prazo_dias: r.prazo_dias }
+      : { ...FRETE_INICIAL, status: 'falhou' }
+
+    setFrete(proximo)
+    salvarParcial(comValores(base, proximo), 'p12')
+  }
+
   const advance: A.Advance = (patch, userText, interstitial) => {
     const proximoLead = { ...lead, ...patch }
     setLead(proximoLead)
@@ -68,6 +112,11 @@ export default function Quiz() {
     const def = STEPS.find((s) => s.id === alvo)
     pushBot([...(interstitial ?? []), ...(def?.prompts ?? [])])
     setCurrent(alvo)
+
+    // Grava a cada resposta: quem abandonar no meio ainda fica registrado.
+    salvarParcial(comValores(proximoLead), alvo)
+
+    if (current === 'p12') void dispararFrete(proximoLead)
   }
 
   function comecar() {
@@ -164,12 +213,18 @@ export default function Quiz() {
               {current === 'p9' && <A.P9 lead={lead} advance={advance} />}
               {current === 'p10' && <A.P10 lead={lead} advance={advance} />}
               {current === 'p11' && <A.P11 lead={lead} advance={advance} />}
+              {current === 'p12' && <A.P12 lead={lead} advance={advance} />}
             </div>
           )}
 
           {current === 'final' && (
             <Suspense fallback={<p className="py-8 text-center text-sm text-mute">Montando seu resumo...</p>}>
-              <Final lead={lead} valor={preco.total} precoUnitario={preco.unitario} />
+              <Final
+                lead={lead}
+                valor={preco.total}
+                precoUnitario={preco.unitario}
+                frete={frete}
+              />
             </Suspense>
           )}
         </div>

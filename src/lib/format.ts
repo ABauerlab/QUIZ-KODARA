@@ -26,3 +26,18 @@ export function formatDate(iso: string) {
   const d = new Date(iso)
   return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
+
+/** Mascara de CEP: 30110-000 */
+export function maskCep(raw: string) {
+  const d = raw.replace(/\D/g, '').slice(0, 8)
+  if (d.length <= 5) return d
+  return `${d.slice(0, 5)}-${d.slice(5)}`
+}
+
+export function cepDigits(masked: string) {
+  return masked.replace(/\D/g, '')
+}
+
+export function isValidCep(masked: string) {
+  return cepDigits(masked).length === 8
+}
