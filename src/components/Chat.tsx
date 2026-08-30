@@ -1,4 +1,5 @@
 import type { Msg } from '../quiz/useConversation'
+import { MarcaK, Wordmark } from './Logo'
 
 export function Bubble({ side, text }: { side: Msg['side']; text: string }) {
   const bot = side === 'bot'
@@ -48,26 +49,10 @@ export function Header() {
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
         {/* O K da logo como foto de contato, mantendo a metáfora do WhatsApp. */}
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel">
-          <img
-            src="/kodara-k.webp"
-            alt=""
-            width={13}
-            height={36}
-            className="h-[19px] w-auto"
-            decoding="async"
-            fetchPriority="high"
-          />
+          <MarcaK className="h-[19px] w-auto text-white" />
         </div>
         <div className="leading-tight">
-          <img
-            src="/kodara-wordmark.webp"
-            alt="Kodara"
-            width={201}
-            height={96}
-            className="h-[21px] w-auto"
-            decoding="async"
-            fetchPriority="high"
-          />
+          <Wordmark className="h-[21px] w-auto text-white" />
           <p className="mt-1 text-xs text-mute">Private Label, responde rápido</p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Wordmark } from '../components/Logo'
 import { env } from '../lib/env'
 import { formatBRL } from '../lib/format'
 import { salvarCompleto } from '../lib/leadStore'
@@ -219,15 +220,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
           </p>
         )}
         <div className="mt-3 flex flex-col items-center gap-1.5">
-          <img
-            src="/kodara-wordmark.webp"
-            alt="Kodara"
-            width={201}
-            height={96}
-            className="h-5 w-auto opacity-70"
-            loading="lazy"
-            decoding="async"
-          />
+          <Wordmark className="h-5 w-auto text-white/60" />
           <p className="text-center text-xs text-mute">Sinta-se livre, vista Kodara!</p>
         </div>
       </div>

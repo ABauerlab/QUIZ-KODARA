@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Bubble, Header, Progress, Typing } from '../components/Chat'
+import { Splash } from '../components/Splash'
 import { calcularFrete } from '../lib/frete'
 import { salvarParcial } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
@@ -38,6 +39,7 @@ export default function Quiz() {
   const [aguardandoUpload, setAguardandoUpload] = useState(false)
   const [precos, setPrecos] = useState<PrecoRow[]>([])
   const [frete, setFrete] = useState<FreteState>(FRETE_INICIAL)
+  const [splash, setSplash] = useState(true)
 
   const { messages, typing, ready, pushBot, pushUser } = useConversation()
   const fim = useRef<HTMLDivElement>(null)
@@ -154,6 +156,7 @@ export default function Quiz() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col">
+      {splash && <Splash onFim={() => setSplash(false)} />}
       <Header />
       <Progress value={pct} />
 

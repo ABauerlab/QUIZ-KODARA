@@ -23,6 +23,13 @@ O SDK do Supabase (55 kB gzip) só baixa depois que a página já pintou.
 
 ---
 
+## Colocar no ar
+
+O passo a passo completo está em **[DEPLOY.md](DEPLOY.md)**: Supabase, login do painel, pacote e
+upload na Hostinger, com checklist de conferência no celular.
+
+---
+
 ## Rodando local
 
 ```bash
@@ -34,10 +41,16 @@ npm run dev            # http://localhost:5173
 Outros comandos:
 
 ```bash
-npm run build      # typecheck + gera dist/
+npm run build      # confere o .env, roda o typecheck e gera dist/
+npm run pacote     # build + kodara-quiz.zip pronto pra Hostinger
 npm run preview    # serve o dist/ pra conferir antes de subir
+npm run build:demo # build sem conferir o .env, só pra ver a interface
 npm run typecheck
 ```
+
+O `npm run build` falha de propósito se faltar variável obrigatória no `.env`, e também se alguém
+colocar uma `service_role` key num `VITE_*`. Um build sem a chave do Supabase sobe bonito e não grava
+lead nenhum, e isso só apareceria depois de queimar tráfego.
 
 ---
 
@@ -155,14 +168,15 @@ A base é a logo da Kodara, o wordmark em handstyle de grafite, branco sobre pre
 
 ### Assets gerados
 
-Todos saíram da logo original por extração de alpha: a luminância do arquivo virou canal de
-transparência, então o traço branco funciona sobre qualquer fundo, sem quadrado preto em volta.
+A logo virou **SVG inline** (`src/components/Logo.tsx`), traçada a partir do arquivo original. Inline
+em vez de imagem por três motivos: some uma requisição do caminho crítico, o traço fica nítido em
+qualquer tamanho, e a cor vem do `currentColor`, então a mesma logo serve header, splash e painel sem
+gerar arquivo novo. Custa 2,7 kB gzip no bundle e economiza uma imagem de 16 kB.
 
-| Arquivo | Onde entra |
+| O que | Onde entra |
 | --- | --- |
-| `kodara-wordmark.webp` (201x96, 6 kB) | header do quiz, fecho da tela final, painel admin |
-| `kodara-wordmark@2x.webp` (460x220, 16 kB) | reserva pra uso maior |
-| `kodara-k.webp` (35x96, 1 kB) | o K sozinho, como foto de contato no header |
+| `<Wordmark />` | tela de abertura, header, fecho da tela final, painel admin |
+| `<MarcaK />` | o K sozinho, como foto de contato no header |
 | `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png` | ícone de aba e de tela inicial |
 
 O favicon usa só o **K**, não o wordmark inteiro: em 16px a palavra toda vira borrão. O K foi
@@ -190,11 +204,15 @@ primário, balão do usuário, barra de progresso.
 Kodara tiver uma cor oficial, é só trocar o valor de `brand` em `tailwind.config.js`, uma linha, e
 todo o sistema acompanha.
 
-### Performance
+### Tela de abertura
 
-O wordmark e o K somam 7 kB e vão com `preload` no `<head>`, então o navegador descobre os dois antes
-do JS rodar. Ambos têm `width` e `height` fixos, então não existe salto de layout quando carregam. A
-logo do fecho da tela final é `loading="lazy"`, já que está fora da primeira dobra.
+A splash mostra a logo em destaque por 1,4s e sai sozinha. **Ela não custa toque nem tempo de funil:**
+a conversa já roda por baixo desde o primeiro render, então o "digitando" da primeira mensagem
+acontece durante a splash. Quando ela sai, as três mensagens de abertura e o botão já estão lá. Um
+toque em qualquer lugar pula na hora.
+
+Isso importa porque o tráfego é pago: um brand moment que atrasa a primeira pergunta custa lead. Esse
+não atrasa nada.
 
 ---
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
+import { Wordmark } from '../components/Logo'
 import { getSupabase } from '../lib/supabase'
 import { supabaseConfigured } from '../lib/env'
 import Leads from './Leads'
@@ -22,7 +23,7 @@ function Login({ supabase }: { supabase: SupabaseClient }) {
 
   return (
     <form onSubmit={entrar} className="mx-auto grid w-full max-w-sm gap-3 px-4 py-16">
-      <img src="/kodara-wordmark.webp" alt="Kodara" width={201} height={96} className="mb-1 h-7 w-auto" />
+      <Wordmark className="mb-1 h-7 w-auto text-white" />
       <p className="text-sm text-mute">Painel de leads. Acesso só pra quem cuida disso.</p>
       <input
         className="field"
@@ -89,7 +90,7 @@ export default function Admin() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <img src="/kodara-wordmark.webp" alt="Kodara" width={201} height={96} className="h-6 w-auto" />
+          <Wordmark className="h-6 w-auto text-white" />
           <p className="mt-1 text-xs text-mute">Painel · {session.user.email}</p>
         </div>
         <button

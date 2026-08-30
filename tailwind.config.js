@@ -32,10 +32,20 @@ export default {
           '0%, 60%, 100%': { opacity: '.25' },
           '30%': { opacity: '1' },
         },
+        marca: {
+          '0%': { opacity: '0', transform: 'scale(.94)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        entra: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         pop: 'pop .22s ease-out both',
         blink: 'blink 1.1s infinite',
+        marca: 'marca .55s cubic-bezier(.2,.8,.2,1) both',
+        entra: 'entra .45s ease-out both',
       },
     },
   },

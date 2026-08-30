@@ -6,11 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/checar-env.mjs && tsc --noEmit && vite build",
     "build:fast": "vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
-    "admin:create": "node scripts/create-admin.mjs"
+    "admin:create": "node scripts/create-admin.mjs",
+    "build:demo": "tsc --noEmit && vite build",
+    "pacote": "npm run build && node scripts/empacotar.mjs"
   },
   "repository": {
     "type": "git",
