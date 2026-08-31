@@ -190,6 +190,15 @@ fundo escuro é assado no ícone de propósito, senão o traço branco sumiria n
 No header o K aparece como avatar redondo e o wordmark como nome do contato, o que mantém a metáfora
 de conversa de WhatsApp em vez de virar um cabeçalho de site.
 
+### "Online"
+
+O header mostra um statusinho verde de "online", igual perfil de contato ativo no WhatsApp e no
+Instagram: uma bolinha verde (`#25D366`, o verde oficial do WhatsApp) no canto do avatar, e outra
+pulsando ao lado do texto "online · responde rápido". É estático, sempre ligado, de propósito: não
+depende de horário nem de status real de atendimento, é sinal visual de "isso aqui responde rápido",
+não uma promessa literal de atendente humano online 24h. Se algum dia fizer sentido só mostrar
+"online" em horário comercial, dá pra condicionar isso no `Header` de `src/components/Chat.tsx`.
+
 ### Paleta
 
 A logo é preto e branco puro, então a interface é monocromática. **O branco é a cor de ação**: botão
