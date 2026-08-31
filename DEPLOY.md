@@ -159,6 +159,55 @@ troque `SUPERFRETE_SANDBOX` pra `false`.
 
 ---
 
+## Etapa 7 (opcional, mas recomendado) · Conversions API do Meta
+
+O quiz funciona sem isso: o Pixel do navegador continua disparando os 5 eventos normalmente. A
+Conversions API é reforço — manda o mesmo evento pelo servidor também, o que melhora a Pontuação de
+Qualidade do Evento e garante que o Meta recebe o sinal mesmo quando o navegador tem ad-blocker ou
+Safari/iOS bloqueia o Pixel (o que é comum e crescente).
+
+### 7.1 Gerar o token (só você consegue fazer essa parte)
+
+1. Acesse [business.facebook.com](https://business.facebook.com), vá em **Configurações da Empresa**.
+2. **Usuários > Usuários do sistema** > criar um usuário de sistema novo (ou usar um existente),
+   com papel **Admin** ou pelo menos acesso à conta de anúncios que tem o pixel `1200831484761221`.
+3. Nesse usuário de sistema, **Adicionar Ativos** > selecione o Pixel > dê permissão de **Gerenciar
+   dados de eventos do pixel**.
+4. **Gerar novo token** pra esse usuário de sistema, com a permissão `ads_management` (ou
+   `business_management`, dependendo de como o Business Manager estiver organizado). Esse é o
+   `FB_ACCESS_TOKEN`.
+5. Guarde esse token num gerenciador de senhas assim que gerar. Ele não aparece de novo depois de
+   fechar a tela.
+
+### 7.2 Deploy da função
+
+```bash
+supabase secrets set FB_ACCESS_TOKEN="o-token-gerado-no-passo-anterior"
+supabase secrets set META_TEST_EVENT_CODE="TEST12345"   # so enquanto estiver testando, ver 7.3
+
+supabase functions deploy capi-evento
+```
+
+`META_PIXEL_ID` não precisa ser configurado: o padrão já é `1200831484761221`, o mesmo pixel do
+front. Só defina esse secret se algum dia usar um pixel diferente.
+
+### 7.3 Testar antes de confiar
+
+1. No Gerenciador de Eventos, aba **Testar eventos**, copia o código que aparece lá
+   (algo como `TEST12345`) e configura como `META_TEST_EVENT_CODE` acima.
+2. Responde o quiz inteiro num navegador de verdade. Os eventos devem aparecer em tempo real na aba
+   de teste, e cada um mostrando origem **"Navegador e servidor"** (não só "Navegador" nem só
+   "Servidor") — é isso que confirma que o `event_id` está batendo dos dois lados e a deduplicação
+   está funcionando.
+3. Confere a **Pontuação de Qualidade do Evento** de cada evento na tela normal do Gerenciador de
+   Eventos (fora da aba de teste, depois de alguns eventos reais acumularem).
+4. **Importante**: depois de validar, **apague o secret `META_TEST_EVENT_CODE`**
+   (`supabase secrets unset META_TEST_EVENT_CODE` e `supabase functions deploy capi-evento` de novo).
+   Enquanto ele estiver configurado, todo evento real fica marcado como teste e **não entra na
+   otimização de campanha**.
+
+---
+
 ## Antes de rodar tráfego pago
 
 Três coisas que ainda são valor de exemplo, não da Kodara:
@@ -171,6 +220,9 @@ Três coisas que ainda são valor de exemplo, não da Kodara:
 4. **Política de privacidade.** Se `VITE_PRIVACY_URL` ainda estiver vazia, preencha antes de rodar
    tráfego pago no Meta. Página de captação de lead sem link de privacidade é motivo comum de anúncio
    reprovado.
+5. **Se configurou a Conversions API (etapa 7): confirme que `META_TEST_EVENT_CODE` foi removido.**
+   Enquanto esse secret existir, todo evento real chega no Meta marcado como teste e não entra na
+   otimização da campanha — silencioso, não trava nada, só some o sinal.
 
 ---
 

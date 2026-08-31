@@ -433,14 +433,20 @@ Fica em `/admin`, protegido por email e senha do Supabase Auth.
 
 ---
 
-## Meta Pixel
+## Meta Pixel + Conversions API
+
+Todo evento dispara nos **dois lados ao mesmo tempo**, com o mesmo `event_id`: o Pixel no navegador
+(`fbq`) e a Conversions API no servidor (Edge Function `capi-evento`). O Meta deduplica sozinho quando
+`event_name` + `event_id` batem dos dois lados — é isso que faz aparecer "Navegador e servidor" como
+origem no Gerenciador de Eventos, e é o que sustenta a Pontuação de Qualidade do Evento (EMQ) mesmo
+quando o navegador está com ad-blocker ou o Pixel não carrega.
 
 Pixel `1200831484761221` instalado no `<head>`. O stub enfileira eventos na hora, mas o `fbevents.js`
 só baixa quando o navegador fica ocioso ou no primeiro toque, pra não competir com a primeira pintura.
 
 | Evento | Quando dispara |
 | --- | --- |
-| `PageView` | ao abrir |
+| `PageView` | ao abrir (só Pixel, não passa pela Conversions API) |
 | `QuizStarted` | clique em "Bora começar" |
 | `Lead` | preencheu nome e WhatsApp na P11 |
 | `InitiateCheckout` | tela final de resumo e valor apareceu |
@@ -454,6 +460,35 @@ evento vai sem `value` em vez de mandar zero e envenenar o aprendizado.
 `InitiateCheckout` e `QuizCompleted` esperam o frete resolver antes de disparar, então o `value` deles
 é o total que a pessoa vai pagar mesmo, peças mais frete. O `Lead` sai na P11, antes do CEP, então
 leva só o valor das peças.
+
+### Como funciona o lado servidor
+
+`src/lib/pixel.ts` gera um `event_id` (UUID) por disparo e manda os dois lados com o mesmo id:
+
+- `fbq(kind, name, payload, { eventID })` pro navegador
+- `src/lib/capi.ts` faz um `fetch(..., { keepalive: true })` pra `capi-evento` com o mesmo `event_id`,
+  mais `nome`/`whatsapp` (quando já coletados, a partir da P11), os cookies `_fbp`/`_fbc` (se
+  existirem) e o `session_id` da sessão
+
+`keepalive: true` importa porque `WhatsAppRedirect` dispara bem antes de `window.location.href`
+navegar pra fora da página — sem isso, o navegador cancelaria a requisição no meio.
+
+A Edge Function `capi-evento` (`supabase/functions/capi-evento/index.ts`):
+
+1. Normaliza e **hasheia** (SHA-256) telefone e nome antes de qualquer coisa. O whatsapp vem sem
+   código de país (formato brasileiro local); a função completa com `55` antes de hashear. PII crua
+   nunca sai do Supabase, só o hash.
+2. Usa `session_id` hasheado como `external_id` — chave de match adicional, sempre presente mesmo
+   antes da P11 (quando ainda não há nome/telefone).
+3. Pega `client_ip_address` do header `x-forwarded-for` e `client_user_agent` do próprio header da
+   requisição (não confia no que o cliente diz que é seu user-agent, usa o que o servidor recebeu).
+4. Manda pra `https://graph.facebook.com/v21.0/{pixel_id}/events` com o `access_token` dos secrets.
+   Nunca bloqueia nem atrasa o quiz: se o secret não estiver configurado, responde `ok:false` sem
+   erro, e falha de rede tem timeout de 5s.
+
+O token da Conversions API **nunca** pode ir num `VITE_*` — ele autoriza escrever evento de conversão
+na conta de anúncios. Mora nos secrets do Supabase, igual o token do SuperFrete. Deploy e secrets em
+`DEPLOY.md`, etapa 7.
 
 ---
 
