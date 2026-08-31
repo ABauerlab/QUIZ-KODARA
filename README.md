@@ -68,6 +68,7 @@ Arquivo `.env` na raiz, a partir do `.env.example`. Ele não vai pro git.
 | `VITE_META_PIXEL_ID` | Pixel da Kodara: `1200831484761221` |
 | `VITE_WHATSAPP_NUMBER` | Número no formato internacional sem símbolo: `553132232356` |
 | `VITE_PIX_KEY` | Chave PIX mostrada na tela final |
+| `VITE_PRIVACY_URL` | Opcional. Link da política de privacidade. Sem ela, o aviso de uso dos dados continua aparecendo, só que sem link |
 
 Essas variáveis entram no bundle na hora do build. Trocou alguma, roda `npm run build` de novo e sobe
 o `dist/` atualizado. Isso vale principalmente pra chave PIX.
@@ -333,6 +334,30 @@ Tem também **Marcar como contatado**, pra tirar da lista quem você já chamou.
 
 ---
 
+## Aviso de privacidade
+
+O quiz coleta nome, WhatsApp, CEP e às vezes um arquivo de arte, e roda com tráfego pago do Meta. Duas
+coisas pedem isso:
+
+- **LGPD**: informar a pessoa, no momento da coleta, sobre o que é feito com o dado.
+- **Política do Meta**: página que capta lead precisa linkar uma política de privacidade acessível.
+  É um motivo comum de anúncio reprovado ou conta sinalizada.
+
+O quiz cobre os dois pontos:
+
+- Um aviso curto aparece na P11 (nome e WhatsApp), o momento em que a pessoa entrega o dado mais
+  sensível: *"Seus dados servem só pra fechar sua produção, a gente não vende nem compartilha com
+  terceiros."*
+- Um link **Privacidade** fica no header, visível desde a primeira tela, pra satisfazer o requisito do
+  Meta de a página ter a política acessível, não só no momento da coleta.
+
+Os dois dependem de `VITE_PRIVACY_URL`. Sem ela, o aviso de texto continua aparecendo (a LGPD não some
+por falta de link), mas nenhum dos dois vira link clicável. Preencha com a política que já existe em
+vistakodara.com.br antes de rodar tráfego. Isto não é aconselhamento jurídico: se a Kodara ainda não
+tem uma política de privacidade publicada, vale confirmar com quem cuida disso antes de apontar o link.
+
+---
+
 ## Painel admin
 
 Fica em `/admin`, protegido por email e senha do Supabase Auth.
@@ -403,6 +428,11 @@ Se o `.htaccess` não aparecer no gerenciador de arquivos, liga a opção de mos
   do WhatsApp. Se o banco falhar, o botão libera mesmo assim, com a mensagem pronta e um botão de
   tentar salvar de novo. Perder o registro é ruim, perder a venda é pior.
 - **Abandono em qualquer ponto**: o lead já está gravado como `incompleto`, com a etapa em que parou.
+- **Corrigir uma resposta**: a seta no header volta pra pergunta anterior exatamente como ela estava,
+  sem recalcular o caminho. Se a pessoa tinha pulado a P4 (menos de 30 peças) e volta até a P3, corrigir
+  pra 40 peças faz a P4 aparecer; e vice-versa. Não tem seta na tela final nem antes da primeira
+  pergunta. Cada correção também atualiza o lead salvo no Supabase, então quem abandona depois de
+  corrigir fica registrado com o dado certo, não o errado.
 
 ---
 

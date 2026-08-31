@@ -44,10 +44,15 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 VITE_META_PIXEL_ID=1200831484761221
 VITE_WHATSAPP_NUMBER=553132232356
 VITE_PIX_KEY=sua-chave-pix-aqui
+VITE_PRIVACY_URL=https://vistakodara.com.br/politica-de-privacidade
 ```
 
 O build confere isso sozinho. Se faltar alguma obrigatória, ele para e diz qual, em vez de gerar um
 site que sobe bonito e não grava lead nenhum.
+
+`VITE_PRIVACY_URL` é opcional, mas vale preencher antes de rodar tráfego: o Meta pede que página de
+captação de lead tenha uma política de privacidade acessível. Sem essa variável o site continua
+funcionando, só que sem o link (o aviso de texto sobre uso dos dados aparece de qualquer jeito).
 
 ---
 
@@ -161,6 +166,9 @@ Três coisas que ainda são valor de exemplo, não da Kodara:
 2. **Pesos das peças.** Camiseta 0,2 kg e moletom 0,6 kg são aproximação. Pese e ajuste, senão o frete
    sai torto.
 3. **Chave PIX.** Confira se é a chave certa, ela aparece na tela final pro cliente pagar.
+4. **Política de privacidade.** Se `VITE_PRIVACY_URL` ainda estiver vazia, preencha antes de rodar
+   tráfego pago no Meta. Página de captação de lead sem link de privacidade é motivo comum de anúncio
+   reprovado.
 
 ---
 

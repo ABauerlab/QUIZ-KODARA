@@ -55,6 +55,10 @@ ETAPA 2 - .env
   VITE_META_PIXEL_ID    = 1200831484761221
   VITE_WHATSAPP_NUMBER  = 553132232356
   VITE_PIX_KEY          = me pergunte, eu te passo
+  VITE_PRIVACY_URL      = link da política de privacidade da Kodara, se já
+                          existir em vistakodara.com.br. Se não souber qual
+                          é, me pergunte em vez de inventar; sem ela o site
+                          funciona mas fica sem o link.
 - Não commite o .env.
 
 ETAPA 3 - Login do painel
@@ -106,6 +110,8 @@ ME AVISE NO FIM
 - que os pesos das peças são aproximação e precisam ser ajustados
 - que o frete real ainda não está ligado, e o quiz mostra "Frete calculado
   na hora de fechar com a gente" até eu configurar
+- se VITE_PRIVACY_URL ficou vazia, avise que o link de privacidade não vai
+  aparecer no site e que isso pode reprovar anúncio no Meta
 
 NÃO FAÇA AGORA
 A etapa do frete (SuperFrete) fica pra depois. Ela precisa do token da

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { env } from '../lib/env'
 import { isValidCep, isValidPhone, maskCep, maskPhone } from '../lib/format'
 import type { GradeTamanhos, Lead } from '../lib/types'
 
@@ -418,6 +419,24 @@ export function P11({ advance }: Props) {
         value={tel}
         onChange={(e) => setTel(maskPhone(e.target.value))}
       />
+      <p className="text-xs text-mute">
+        Seus dados servem só pra fechar sua produção, a gente não vende nem compartilha com
+        terceiros.
+        {env.privacyUrl && (
+          <>
+            {' '}
+            <a
+              href={env.privacyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Política de privacidade
+            </a>
+            .
+          </>
+        )}
+      </p>
       <button className="btn-primary" disabled={!ok}>
         Continuar
       </button>

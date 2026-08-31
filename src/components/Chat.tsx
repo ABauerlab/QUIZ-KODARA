@@ -1,3 +1,4 @@
+import { env } from '../lib/env'
 import type { Msg } from '../quiz/useConversation'
 import { MarcaK, Wordmark } from './Logo'
 
@@ -43,18 +44,55 @@ export function Progress({ value }: { value: number }) {
   )
 }
 
-export function Header() {
+export function Header({
+  podeVoltar,
+  onVoltar,
+}: {
+  podeVoltar?: boolean
+  onVoltar?: () => void
+}) {
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-ink/95 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
+        {/* So ocupa espaco quando existe pra onde voltar, como no WhatsApp. */}
+        {podeVoltar && (
+          <button
+            type="button"
+            onClick={onVoltar}
+            aria-label="Voltar pra pergunta anterior"
+            className="-ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition active:scale-90"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        )}
         {/* O K da logo como foto de contato, mantendo a metáfora do WhatsApp. */}
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel">
           <MarcaK className="h-[19px] w-auto text-white" />
         </div>
-        <div className="leading-tight">
+        <div className="min-w-0 flex-1 leading-tight">
           <Wordmark className="h-[21px] w-auto text-white" />
           <p className="mt-1 text-xs text-mute">Private Label, responde rápido</p>
         </div>
+        {env.privacyUrl && (
+          <a
+            href={env.privacyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-xs text-mute underline"
+          >
+            Privacidade
+          </a>
+        )}
       </div>
     </header>
   )
