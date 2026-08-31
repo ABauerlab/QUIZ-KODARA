@@ -1,17 +1,11 @@
-import { calcularPrecoCamiseta } from './pricingEngine'
+import { normalizePeca } from './normalizeText'
+import { calcularPrecoPeca, custoBasePorTipoPeca } from './pricingEngine'
 import { getSupabase } from './supabase'
 import type { Lead, PrecoRow, TecnicaEstampa } from './types'
 
-/** Normaliza pra casar "Camiseta", "camisetas", "Moletom ou corta-vento". */
-export function normalizePeca(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-}
+export { normalizePeca }
 
-/** Camiseta e as modelagens do catalogo (Oversized, Babylook...) usam o motor de custo. */
+/** Camiseta e as modelagens do catalogo (Oversized, Babylook...) usam a etapa de modelagem/tecido. */
 export function isCamiseta(tipoPeca: string | null | undefined): boolean {
   if (!tipoPeca) return false
   return normalizePeca(tipoPeca).includes('camiseta')
@@ -73,19 +67,20 @@ const SEM_PRECO_LEAD: PrecoLeadResult = {
 }
 
 /**
- * Ponto único de cálculo de preço usado no quiz: camiseta (e as modelagens do
- * catálogo) passa pelo motor de custo + margem; qualquer outra peça continua
- * na tabela de faixa de preço plana, editável no admin.
+ * Ponto único de cálculo de preço usado no quiz: qualquer peça com custo real
+ * cadastrado (camiseta, moletom, boné, ecobag) passa pelo motor de custo +
+ * margem; peça sem custo cadastrado ainda cai na tabela de faixa de preço
+ * plana, editável no admin.
  */
 export function calcularPrecoLead(rows: PrecoRow[], lead: Lead): PrecoLeadResult {
   if (!lead.quantidade || lead.quantidade < 1 || !lead.tipo_peca) return SEM_PRECO_LEAD
 
-  if (isCamiseta(lead.tipo_peca)) {
+  if (custoBasePorTipoPeca(lead.tipo_peca) !== null) {
     if (lead.tecnica_estampa !== 'silk' && lead.tecnica_estampa !== 'dtf') return SEM_PRECO_LEAD
-    const r = calcularPrecoCamiseta({
+    const r = calcularPrecoPeca({
+      tipoPeca: lead.tipo_peca,
       quantidade: lead.quantidade,
       tecnica: lead.tecnica_estampa,
-      tecido: lead.tecido,
       coresEstampa: lead.cores_estampa,
       estampaLarguraCm: lead.estampa_largura_cm,
       estampaAlturaCm: lead.estampa_altura_cm,

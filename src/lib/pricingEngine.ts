@@ -1,20 +1,41 @@
+import { normalizePeca } from './normalizeText'
+
 /**
- * Motor de precificação por custo + margem, só pra camiseta (o produto foco
- * da Kodara hoje, com ecossistema pronto: modelagem própria, gola em ribana,
- * tecido que não encolhe). As outras peças (moletom, boné, ecobag) continuam
- * usando a tabela de faixa de preço plana em `pricing.ts` até existir uma
- * regra de custo equivalente pra elas.
+ * Motor de precificação por custo + margem. Cobre toda peça com custo real
+ * cadastrado pela Kodara (camiseta, moletom/corta-vento, boné, ecobag);
+ * qualquer outra peça sem custo cadastrado continua na tabela de faixa de
+ * preço plana em `pricing.ts`, editável no admin.
  *
  * A lógica segue à risca o documento de precificação passado pela Kodara:
  * CUSTO REAL → MARGEM POR FAIXA DE QUANTIDADE → PREÇO → ARREDONDAMENTO
  * COMERCIAL → DESCONTO PIX (com piso de margem mínima).
  *
- * Valores confirmados com a Kodara (não são chute, foram perguntados
- * diretamente): CUSTO_DTF_METRO, LARGURA_DTF_CM e CUSTO_GRAVACAO_TELA.
+ * Nenhum custo aqui é chute: todos foram confirmados diretamente com a
+ * Kodara (inclusive CUSTO_DTF_METRO, LARGURA_DTF_CM e CUSTO_GRAVACAO_TELA,
+ * que o documento original deixava como "configurável").
  */
 
 export const CUSTO_CAMISETA_PADRAO = 40.0
 export const CUSTO_CAMISETA_GROSSA = 45.0
+export const CUSTO_MOLETOM = 85.0
+export const CUSTO_BONE_FIVE_PANEL = 49.9
+export const CUSTO_ECOBAG = 50.0
+
+/** Custo base por peça (o "corpo" antes de aplicar técnica de estampa). Só entra aqui o que já foi confirmado com a Kodara. */
+const CUSTOS_BASE_POR_PECA: { chave: string; custo: number }[] = [
+  { chave: 'camiseta', custo: CUSTO_CAMISETA_PADRAO },
+  { chave: 'moletom', custo: CUSTO_MOLETOM },
+  { chave: 'bone', custo: CUSTO_BONE_FIVE_PANEL },
+  { chave: 'ecobag', custo: CUSTO_ECOBAG },
+]
+
+/** null = peça sem custo cadastrado ainda, cai na tabela plana (sob consulta até ter custo real). */
+export function custoBasePorTipoPeca(tipoPeca: string | null | undefined): number | null {
+  if (!tipoPeca) return null
+  const norm = normalizePeca(tipoPeca)
+  const match = CUSTOS_BASE_POR_PECA.find((c) => norm.includes(c.chave))
+  return match?.custo ?? null
+}
 
 export const CUSTO_APLICACAO_DTF = 1.5
 /** R$ por metro linear do rolo de DTF. */
@@ -87,10 +108,10 @@ export function arredondarComercial(valor: number): number {
   return candidato >= valor ? candidato : Number((candidato + 10).toFixed(2))
 }
 
-export interface PrecoCamisetaInput {
+export interface PrecoPecaInput {
+  tipoPeca: string | null | undefined
   quantidade: number
   tecnica: 'silk' | 'dtf'
-  tecido?: string | null
   coresEstampa?: number | null
   estampaLarguraCm?: number | null
   estampaAlturaCm?: number | null
@@ -119,17 +140,21 @@ const SEM_RESULTADO: PrecoCamisetaResult = {
 }
 
 /**
- * Calcula o preço de uma camiseta pelo custo real + margem por faixa de
- * quantidade, seguindo a fórmula PREÇO = CUSTO / (1 - MARGEM), com
- * arredondamento comercial e simulação do desconto Pix respeitando a margem
- * mínima (se o Pix derrubasse a margem abaixo do piso, o desconto não é
- * aplicado — em vez de vender abaixo do combinado).
+ * Calcula o preço de uma peça pelo custo real (custo base da peça + técnica
+ * de estampa) + margem por faixa de quantidade, seguindo a fórmula
+ * PREÇO = CUSTO / (1 - MARGEM), com arredondamento comercial e simulação do
+ * desconto Pix respeitando a margem mínima (se o Pix derrubasse a margem
+ * abaixo do piso, o desconto não é aplicado — em vez de vender abaixo do
+ * combinado). Retorna nulo se a peça não tem custo cadastrado ainda: é
+ * proibido inventar preço sem saber o custo real.
  */
-export function calcularPrecoCamiseta(input: PrecoCamisetaInput): PrecoCamisetaResult {
+export function calcularPrecoPeca(input: PrecoPecaInput): PrecoCamisetaResult {
   const { quantidade, tecnica } = input
   if (!quantidade || quantidade < 1) return SEM_RESULTADO
 
-  const custoBase = custoBaseCamiseta(input.tecido)
+  const custoBase = custoBasePorTipoPeca(input.tipoPeca)
+  if (custoBase === null) return SEM_RESULTADO
+
   let custoAdicionalPorPeca: number
   let custoFixo = 0
   let alerta: AlertaProducao | null = null
@@ -176,9 +201,5 @@ export function calcularPrecoCamiseta(input: PrecoCamisetaInput): PrecoCamisetaR
 // CUSTO_CAMISETA_GROSSA fica disponível pro futuro (tecido/gramatura mais
 // estruturada), mas nenhum dos tecidos do catálogo atual (Penteado,
 // Confort/Ceramic, Poliamida, Dryfit, Elastano) foi marcado pela Kodara como
-// "grossa" ainda — por enquanto todo tecido usa CUSTO_CAMISETA_PADRAO, pra
+// "grossa" ainda — por enquanto toda camiseta usa CUSTO_CAMISETA_PADRAO, pra
 // não inventar essa diferenciação sem confirmação.
-export function custoBaseCamiseta(_tecido?: string | null): number {
-  void _tecido
-  return CUSTO_CAMISETA_PADRAO
-}
