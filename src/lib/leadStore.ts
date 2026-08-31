@@ -41,6 +41,12 @@ function payload(lead: Lead, etapa: string) {
     tecnica_estampa: lead.tecnica_estampa,
     precisa_orientacao_tecnica: lead.precisa_orientacao_tecnica,
     modelagem_status: lead.modelagem_status,
+    modelagem: lead.modelagem,
+    tecido: lead.tecido,
+    cores_estampa: lead.cores_estampa,
+    estampa_largura_cm: lead.estampa_largura_cm,
+    estampa_altura_cm: lead.estampa_altura_cm,
+    aplicacoes: lead.aplicacoes,
     cores: lead.cores,
     grade_tamanhos: lead.grade_tamanhos,
     tem_arte: lead.tem_arte,
@@ -54,6 +60,8 @@ function payload(lead: Lead, etapa: string) {
     cep_destino: lead.cep_destino,
     valor_frete_calculado: lead.valor_frete_calculado,
     valor_total_com_frete: lead.valor_total_com_frete,
+    kit_marca_itens: lead.kit_marca_itens,
+    kit_marca_outros: lead.kit_marca_outros,
     etapa_atual: etapa,
   }
 }

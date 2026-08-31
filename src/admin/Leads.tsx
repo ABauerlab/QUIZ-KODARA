@@ -5,7 +5,7 @@ import { BUCKET_ESTAMPAS } from '../quiz/UploadEstampa'
 import { ETAPA_LABEL } from '../quiz/steps'
 import {
   ESTAGIO_LABEL,
-  MODELAGEM_LABEL,
+  KIT_MARCA_ITENS,
   STATUS_LABEL,
   TECNICA_LABEL,
   type Lead,
@@ -75,13 +75,34 @@ function Detalhe({
             : null
         }
       />
-      <Campo
-        label="Modelagem"
-        value={lead.modelagem_status ? MODELAGEM_LABEL[lead.modelagem_status] : null}
-      />
+      <Campo label="Modelagem" value={lead.modelagem} />
+      <Campo label="Tecido" value={lead.tecido} />
       <Campo label="Cores" value={lead.cores} />
       <Campo label="Grade" value={grade} />
       <Campo label="Posição da estampa" value={lead.posicao_tamanho_estampa} />
+      <Campo
+        label="Cores da estampa (silk)"
+        value={lead.tecnica_estampa === 'silk' ? lead.cores_estampa : null}
+      />
+      <Campo
+        label="Tamanho da estampa (DTF)"
+        value={
+          lead.tecnica_estampa === 'dtf' && lead.estampa_largura_cm && lead.estampa_altura_cm
+            ? `${lead.estampa_largura_cm}x${lead.estampa_altura_cm}cm${lead.aplicacoes ? `, ${lead.aplicacoes} aplicações` : ''}`
+            : null
+        }
+      />
+      <Campo
+        label="Kit Marca"
+        value={
+          lead.kit_marca_itens?.length
+            ? lead.kit_marca_itens
+                .map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c)
+                .join(', ')
+            : null
+        }
+      />
+      <Campo label="Kit Marca — outros materiais" value={lead.kit_marca_outros} />
       <Campo label="Prazo" value={lead.prazo_desejado} />
       <Campo label="Arte pronta" value={lead.tem_arte ? 'Sim' : 'Não'} />
       <Campo label="CEP de entrega" value={lead.cep_destino} />

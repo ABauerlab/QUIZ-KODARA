@@ -99,7 +99,13 @@ No painel do Supabase, abra o **SQL Editor** e rode **dois arquivos, nessa ordem
 - tabela `peso_estimado_pecas` com peso e caixa aproximados por peça
 - a função `salvar_lead`, que é como o quiz grava resposta por resposta
 
-Os dois são idempotentes, rodar de novo não quebra nada.
+**`supabase/03-modelagem-tecido-kit-marca.sql`** (modelagem, tecido e Kit Marca) cria:
+
+- os campos `modelagem`, `tecido`, `cores_estampa`, `estampa_largura_cm`, `estampa_altura_cm`,
+  `aplicacoes`, `kit_marca_itens` e `kit_marca_outros` no lead
+- atualiza `salvar_lead` pra gravar esses campos novos
+
+Os três são idempotentes, rodar de novo não quebra nada.
 
 ### 2. O que o RLS garante
 
@@ -248,7 +254,7 @@ supabase login
 supabase link --project-ref SEU_PROJECT_REF
 
 supabase secrets set SUPERFRETE_TOKEN="seu-token"
-supabase secrets set SUPERFRETE_CEP_ORIGEM="30160040"       # R. Rio de Janeiro, 462 - Centro, BH
+supabase secrets set SUPERFRETE_CEP_ORIGEM="30160041"       # R. Rio de Janeiro, 462 - Centro, BH
 supabase secrets set SUPERFRETE_USER_AGENT="Kodara Quiz/1.0 (contato@vistakodara.com.br)"
 supabase secrets set SUPERFRETE_SANDBOX="true"              # tire quando for pra valer
 
@@ -259,7 +265,7 @@ O token sai em web.superfrete.com > Integrações > Desenvolvedores > Integrar. 
 email de contato é exigido pela API deles.
 
 `SUPERFRETE_CEP_ORIGEM` já é o CEP real da Kodara (R. Rio de Janeiro, 462 - Sl 2217 - Centro, Belo
-Horizonte - MG, 30160-040). Enquanto o secret não for configurado no Supabase (rodar o `supabase
+Horizonte - MG, 30160-041). Enquanto o secret não for configurado no Supabase (rodar o `supabase
 secrets set` acima é uma ação que só quem tem acesso à CLI logada no projeto pode fazer), a função
 responde "não configurado" e o quiz mostra a mensagem de frete a combinar, sem quebrar.
 

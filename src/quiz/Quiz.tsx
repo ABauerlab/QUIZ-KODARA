@@ -5,17 +5,17 @@ import { env } from '../lib/env'
 import { calcularFrete } from '../lib/frete'
 import { salvarParcial } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
-import { calcularPreco, fetchTabelaPrecos } from '../lib/pricing'
+import { calcularPrecoLead, fetchTabelaPrecos } from '../lib/pricing'
 import { emptyLead, type Lead, type PrecoRow } from '../lib/types'
 import * as A from './Answers'
 import { UploadEstampa } from './UploadEstampa'
 import { useConversation } from './useConversation'
 import {
-  ABERTURA,
   MSG_MARCA_NOVA,
   MSG_SEM_ARTE,
   MSG_UPLOAD,
   STEPS,
+  aberturaMensagens,
   nextStep,
   progress,
   type StepId,
@@ -58,7 +58,7 @@ export default function Quiz() {
   useEffect(() => {
     if (abriu.current) return
     abriu.current = true
-    pushBot(ABERTURA)
+    pushBot(aberturaMensagens())
   }, [pushBot])
 
   // Busca a tabela de precos assim que a peca e a quantidade existem, pra que o
@@ -70,10 +70,7 @@ export default function Quiz() {
       .catch(() => setPrecos([]))
   }, [lead.tipo_peca, lead.quantidade, precos.length])
 
-  const preco = useMemo(
-    () => calcularPreco(precos, lead.tecnica_estampa, lead.tipo_peca, lead.quantidade),
-    [precos, lead.tecnica_estampa, lead.tipo_peca, lead.quantidade],
-  )
+  const preco = useMemo(() => calcularPrecoLead(precos, lead), [precos, lead])
 
   useEffect(() => {
     fim.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -81,7 +78,7 @@ export default function Quiz() {
 
   /** Junta o que ja foi respondido com o que foi calculado, do jeito que vai pro banco. */
   function comValores(base: Lead, freteAtual: FreteState = frete): Lead {
-    const p = calcularPreco(precos, base.tecnica_estampa, base.tipo_peca, base.quantidade)
+    const p = calcularPrecoLead(precos, base)
     const valorFrete = freteAtual.status === 'ok' ? freteAtual.valor : null
     return {
       ...base,
@@ -209,7 +206,7 @@ export default function Quiz() {
     setAguardandoUpload(false)
     setCurrent('abertura')
     rewindTo(0)
-    pushBot(ABERTURA)
+    pushBot(aberturaMensagens())
   }
 
   /**
@@ -283,9 +280,10 @@ export default function Quiz() {
                 </div>
               )}
               {current === 'p2' && <A.P2 lead={lead} advance={advance} />}
+              {current === 'p2m' && <A.P2M lead={lead} advance={advance} />}
+              {current === 'p2t' && <A.P2T lead={lead} advance={advance} />}
               {current === 'p3' && <A.P3 lead={lead} advance={advance} />}
               {current === 'p4' && <A.P4 lead={lead} advance={advance} />}
-              {current === 'p5' && <A.P5 lead={lead} advance={advance} />}
               {current === 'p6' && <A.P6 lead={lead} advance={advance} />}
               {current === 'p7' && <A.P7 lead={lead} advance={advance} />}
               {current === 'p8' &&
@@ -305,6 +303,7 @@ export default function Quiz() {
                   </div>
                 ))}
               {current === 'p9' && <A.P9 lead={lead} advance={advance} />}
+              {current === 'p9d' && <A.P9D lead={lead} advance={advance} />}
               {current === 'p10' && <A.P10 lead={lead} advance={advance} />}
               {current === 'p11' && <A.P11 lead={lead} advance={advance} />}
               {current === 'p12' && <A.P12 lead={lead} advance={advance} />}
