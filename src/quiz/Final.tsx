@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Wordmark } from '../components/Logo'
 import { env } from '../lib/env'
 import { formatBRL } from '../lib/format'
 import { salvarCompleto } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
-import { MODELAGEM_LABEL, TECNICA_LABEL, type Lead } from '../lib/types'
+import { KIT_MARCA_ITENS, TECNICA_LABEL, type Lead } from '../lib/types'
 import type { FreteState } from './Quiz'
 
 interface Props {
@@ -32,20 +32,41 @@ function gradeTexto(lead: Lead) {
   return e.map(([t, q]) => `${t}: ${q}`).join(' | ')
 }
 
-function mensagemWhats(lead: Lead, pecas: number | null, valorFrete: number | null, total: number | null) {
+function mensagemWhats(
+  lead: Lead,
+  pecas: number | null,
+  valorFrete: number | null,
+  total: number | null,
+  kitItens: string[],
+  kitOutros: string,
+) {
   const linhas = [
     'Fala Kodara! Acabei de fechar meu briefing no quiz de Private Label.',
     '',
     `Nome: ${lead.nome ?? ''}`,
     `Peça: ${lead.tipo_peca ?? ''}`,
+    lead.modelagem ? `Modelagem: ${lead.modelagem}` : null,
+    lead.tecido ? `Tecido: ${lead.tecido}` : null,
     `Quantidade: ${lead.quantidade ?? ''}`,
     `Técnica: ${lead.tecnica_estampa ? TECNICA_LABEL[lead.tecnica_estampa] : ''}`,
     `CEP: ${lead.cep_destino ?? ''}`,
     `Peças: ${pecas ? formatBRL(pecas) : 'sob consulta'}`,
     `Frete: ${valorFrete ? formatBRL(valorFrete) : 'a calcular'}`,
+    kitItens.length
+      ? `Kit Marca: ${kitItens.map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c).join(', ')}`
+      : null,
+    kitOutros.trim() ? `Outros materiais gráficos: ${kitOutros.trim()}` : null,
     `Total: ${total ? formatBRL(total) : 'sob consulta'}`,
-  ]
+  ].filter((l): l is string => l !== null)
   return encodeURIComponent(linhas.join('\n'))
+}
+
+function precoKitMarcaItem(chave: string, quantidadePecas: number | null): number {
+  const item = KIT_MARCA_ITENS.find((i) => i.chave === chave)
+  if (!item) return 0
+  if (item.preco !== null) return item.preco
+  // Ziplock: R$2 por unidade, uma pra cada peça do pedido.
+  return 2 * (quantidadePecas ?? 0)
 }
 
 export default function Final({ lead, valor, precoUnitario, frete }: Props) {
@@ -53,12 +74,23 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   const [erroSalvar, setErroSalvar] = useState(false)
   const [salvando, setSalvando] = useState(true)
   const [copiado, setCopiado] = useState(false)
+  const [kitItens, setKitItens] = useState<string[]>([])
+  const [kitOutros, setKitOutros] = useState('')
   const tentativa = useRef(0)
 
   const valorFrete = frete.status === 'ok' ? frete.valor : null
+  const kitMarcaTotal = useMemo(
+    () => kitItens.reduce((soma, chave) => soma + precoKitMarcaItem(chave, lead.quantidade), 0),
+    [kitItens, lead.quantidade],
+  )
   // Sem valor de peça não existe total: frete sozinho não é o preço do pedido.
-  const total = valor !== null ? Number((valor + (valorFrete ?? 0)).toFixed(2)) : null
+  const total =
+    valor !== null ? Number((valor + (valorFrete ?? 0) + kitMarcaTotal).toFixed(2)) : null
   const cotandoFrete = frete.status === 'carregando'
+
+  function toggleKitItem(chave: string) {
+    setKitItens((s) => (s.includes(chave) ? s.filter((c) => c !== chave) : [...s, chave]))
+  }
 
   async function salvar() {
     setSalvando(true)
@@ -71,6 +103,8 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         preco_unitario: precoUnitario,
         valor_frete_calculado: valorFrete,
         valor_total_com_frete: total,
+        kit_marca_itens: kitItens.length ? kitItens : null,
+        kit_marca_outros: kitOutros.trim() || null,
       })
       setSalvo(true)
       pixel.quizCompleted(
@@ -98,6 +132,14 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cotandoFrete])
 
+  // Reflete a escolha do Kit Marca no lead salvo, já que ela acontece depois
+  // do salvamento inicial (o upsell é oferecido só depois do resumo pronto).
+  useEffect(() => {
+    if (!salvo) return
+    void salvar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kitItens, kitOutros])
+
   // O lead nunca fica preso: depois de uma tentativa que falhou, o WhatsApp libera.
   const liberado = !cotandoFrete && (salvo || (erroSalvar && !salvando))
 
@@ -120,7 +162,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
       { nome: lead.nome, whatsapp: lead.whatsapp },
       { content_name: lead.tipo_peca ?? 'private_label' },
     )
-    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total)}`
+    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total, kitItens, kitOutros)}`
   }
 
   return (
@@ -132,17 +174,25 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         </p>
         <div>
           {lead.tipo_peca && <Linha label="Peça" value={lead.tipo_peca} />}
+          {lead.modelagem && <Linha label="Modelagem" value={lead.modelagem} />}
+          {lead.tecido && <Linha label="Tecido" value={lead.tecido} />}
           {lead.quantidade && <Linha label="Quantidade" value={`${lead.quantidade} peças`} />}
           {lead.tecnica_estampa && (
             <Linha label="Técnica" value={TECNICA_LABEL[lead.tecnica_estampa]} />
-          )}
-          {lead.modelagem_status && (
-            <Linha label="Modelagem" value={MODELAGEM_LABEL[lead.modelagem_status]} />
           )}
           {lead.cores && <Linha label="Cor da peça" value={lead.cores} />}
           {grade && <Linha label="Grade" value={grade} />}
           {lead.posicao_tamanho_estampa && (
             <Linha label="Estampa" value={lead.posicao_tamanho_estampa} />
+          )}
+          {lead.tecnica_estampa === 'silk' && lead.cores_estampa && (
+            <Linha label="Cores da estampa" value={`${lead.cores_estampa}`} />
+          )}
+          {lead.tecnica_estampa === 'dtf' && lead.estampa_largura_cm && lead.estampa_altura_cm && (
+            <Linha
+              label="Tamanho da estampa"
+              value={`${lead.estampa_largura_cm}x${lead.estampa_altura_cm}cm${lead.aplicacoes ? `, ${lead.aplicacoes} aplicação${lead.aplicacoes > 1 ? 'ões' : ''}` : ''}`}
+            />
           )}
           <Linha label="Arte" value={lead.tem_arte ? 'Já tem arquivo' : 'Kodara cria a estampa'} />
           {lead.prazo_desejado && <Linha label="Prazo" value={lead.prazo_desejado} />}
@@ -167,6 +217,12 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
                     : 'a combinar'}
               </span>
             </div>
+            {kitMarcaTotal > 0 && (
+              <div className="mt-2 flex justify-between gap-4 text-sm">
+                <span className="text-mute">Kit Marca</span>
+                <span className="font-medium">{formatBRL(kitMarcaTotal)}</span>
+              </div>
+            )}
             <div className="mt-3 border-t border-white/10 pt-3">
               <p className="text-sm text-mute">Total estimado</p>
               <p className="text-3xl font-black text-brand">{total ? formatBRL(total) : '...'}</p>
@@ -214,6 +270,48 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
           </p>
         </div>
       )}
+
+      <div className="rounded-2xl border border-line bg-panel p-4">
+        <h3 className="font-bold">Kit Marca</h3>
+        <p className="mt-1 text-sm text-mute">
+          Aqui você encontra tudo pra sua marca, da estampa ao material gráfico completo. Quer
+          adicionar algum item ao seu pedido?
+        </p>
+        <div className="mt-3 grid gap-2">
+          {KIT_MARCA_ITENS.map((item) => (
+            <label
+              key={item.chave}
+              className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-line bg-ink/40 px-3 py-2"
+            >
+              <span className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={kitItens.includes(item.chave)}
+                  onChange={() => toggleKitItem(item.chave)}
+                />
+                <span>
+                  {item.label}
+                  <span className="block text-xs text-mute">{item.descricao}</span>
+                </span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold text-brand">
+                {formatBRL(precoKitMarcaItem(item.chave, lead.quantidade))}
+              </span>
+            </label>
+          ))}
+        </div>
+        <input
+          className="field mt-3"
+          placeholder="Quer outro material gráfico? Conta aqui (opcional)"
+          value={kitOutros}
+          onChange={(e) => setKitOutros(e.target.value)}
+        />
+        {kitMarcaTotal > 0 && (
+          <p className="mt-2 text-sm text-mute">
+            Kit Marca adicionado: <span className="font-semibold text-white">{formatBRL(kitMarcaTotal)}</span>
+          </p>
+        )}
+      </div>
 
       <div className="sticky bottom-0 -mx-4 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur">
         <button className="btn-primary" disabled={!liberado} onClick={irProWhats}>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { env } from '../lib/env'
 import { isValidCep, isValidPhone, maskCep, maskPhone } from '../lib/format'
-import type { GradeTamanhos, Lead } from '../lib/types'
+import { MODELAGENS_CAMISA, TECIDOS_CAMISA, type GradeTamanhos, type Lead } from '../lib/types'
+import { MSG_ETIQUETA, MSG_QUALIDADE } from './steps'
 
 export type Advance = (patch: Partial<Lead>, userText: string, interstitial?: string[]) => void
 
@@ -113,8 +114,8 @@ export function P3({ advance }: Props) {
     if (!valido) return
     const patch: Partial<Lead> = { quantidade: qtd }
     const texto = `${qtd} peça${qtd > 1 ? 's' : ''}`
-    if (qtd < 30) {
-      // Abaixo de 30 a producao e sempre DTF, entao a P4 nao faz sentido.
+    if (qtd < 20) {
+      // Abaixo de 20 a producao e sempre DTF, entao a P4 nao faz sentido.
       patch.tecnica_estampa = 'dtf'
       advance(patch, texto, [
         'Pra essa quantidade a gente trabalha com DTF, que libera produção a partir de 1 peça. Ótimo pra testar antes de produzir em escala.',
@@ -197,24 +198,43 @@ export function P4({ advance }: Props) {
   )
 }
 
-export function P5({ advance }: Props) {
+export function P2M({ advance }: Props) {
+  const [outra, setOutra] = useState(false)
+  if (outra) {
+    return <FreeText placeholder="Qual modelagem?" onSubmit={(v) => advance({ modelagem: v }, v)} />
+  }
   return (
     <Options>
-      <button
-        className="btn"
-        onClick={() => advance({ modelagem_status: 'pronta' }, 'Já tenho modelagem pronta')}
-      >
-        Já tenho modelagem pronta
-      </button>
-      <button
-        className="btn"
-        onClick={() =>
-          advance({ modelagem_status: 'desenvolver' }, 'Preciso desenvolver a modelagem com a Kodara')
-        }
-      >
-        Preciso desenvolver a modelagem com a Kodara
+      {MODELAGENS_CAMISA.map((m) => (
+        <button key={m} className="btn" onClick={() => advance({ modelagem: m }, m)}>
+          {m}
+        </button>
+      ))}
+      <button className="btn" onClick={() => setOutra(true)}>
+        Outra modelagem
       </button>
     </Options>
+  )
+}
+
+const MSGS_TECIDO = [MSG_QUALIDADE, MSG_ETIQUETA]
+
+export function P2T({ advance }: Props) {
+  const [outro, setOutro] = useState(false)
+  if (outro) {
+    return (
+      <FreeText placeholder="Qual tecido?" onSubmit={(v) => advance({ tecido: v }, v, MSGS_TECIDO)} />
+    )
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {TECIDOS_CAMISA.map((t) => (
+        <Chip key={t} onClick={() => advance({ tecido: t }, t, MSGS_TECIDO)}>
+          {t}
+        </Chip>
+      ))}
+      <Chip onClick={() => setOutro(true)}>Outro / não sei</Chip>
+    </div>
   )
 }
 
@@ -259,7 +279,7 @@ export function P6({ advance }: Props) {
   )
 }
 
-const TAMANHOS = ['P', 'M', 'G', 'GG']
+const TAMANHOS = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EXG']
 
 export function P7({ lead, advance }: Props) {
   const [grade, setGrade] = useState<GradeTamanhos>({})
@@ -359,6 +379,97 @@ export function P9({ advance }: Props) {
       ))}
       <Chip onClick={() => setOutro(true)}>Outro</Chip>
     </div>
+  )
+}
+
+const CONTAGEM_CORES = [1, 2, 3, 4, 5]
+const CONTAGEM_APLICACOES: { valor: number; label: string }[] = [
+  { valor: 1, label: '1 (só uma posição)' },
+  { valor: 2, label: '2 (ex: frente + costas)' },
+  { valor: 3, label: '3 (ex: frente + costas + etiqueta)' },
+]
+
+/** Detalhe técnico que fecha o custo real: cores no silk, tamanho e aplicações no DTF. */
+export function P9D({ lead, advance }: Props) {
+  const [cores, setCores] = useState<number | null>(null)
+  const [largura, setLargura] = useState('')
+  const [altura, setAltura] = useState('')
+  const [aplicacoes, setAplicacoes] = useState<number | null>(null)
+
+  if (lead.tecnica_estampa === 'silk') {
+    return (
+      <div className="grid gap-3">
+        <p className="text-sm text-mute">Quantas cores tem sua estampa?</p>
+        <div className="flex flex-wrap gap-2">
+          {CONTAGEM_CORES.map((c) => (
+            <Chip key={c} active={cores === c} onClick={() => setCores(c)}>
+              {c}
+            </Chip>
+          ))}
+        </div>
+        <button
+          className="btn-primary"
+          disabled={!cores}
+          onClick={() => {
+            if (!cores) return
+            advance({ cores_estampa: cores }, `${cores} cor${cores > 1 ? 'es' : ''}`)
+          }}
+        >
+          Continuar
+        </button>
+      </div>
+    )
+  }
+
+  const w = Number.parseInt(largura, 10)
+  const h = Number.parseInt(altura, 10)
+  const medidasOk = Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0
+  const ok = medidasOk && !!aplicacoes
+
+  return (
+    <form
+      className="grid gap-3"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!ok) return
+        advance(
+          { estampa_largura_cm: w, estampa_altura_cm: h, aplicacoes },
+          `${w}x${h}cm, ${aplicacoes} aplicação${aplicacoes! > 1 ? 'ões' : ''}`,
+        )
+      }}
+    >
+      <p className="text-sm text-mute">Tamanho da estampa (cm)</p>
+      <div className="flex items-center gap-2">
+        <input
+          className="field flex-1"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="Largura"
+          value={largura}
+          onChange={(e) => setLargura(e.target.value.replace(/\D/g, '').slice(0, 3))}
+        />
+        <span className="text-mute">x</span>
+        <input
+          className="field flex-1"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="Altura"
+          value={altura}
+          onChange={(e) => setAltura(e.target.value.replace(/\D/g, '').slice(0, 3))}
+        />
+      </div>
+      <p className="text-sm text-mute">Quantas aplicações (posições diferentes de estampa)?</p>
+      <div className="flex flex-wrap gap-2">
+        {CONTAGEM_APLICACOES.map((a) => (
+          <Chip key={a.valor} active={aplicacoes === a.valor} onClick={() => setAplicacoes(a.valor)}>
+            {a.label}
+          </Chip>
+        ))}
+      </div>
+      <button className="btn-primary" disabled={!ok}>
+        Continuar
+      </button>
+    </form>
   )
 }
 

@@ -19,6 +19,7 @@ O quiz não grava nada sem isso.
 3. Vá em **SQL Editor** e rode, nessa ordem, um de cada vez:
    - o conteúdo de `supabase/schema.sql`
    - o conteúdo de `supabase/02-frete-e-recuperacao.sql`
+   - o conteúdo de `supabase/03-modelagem-tecido-kit-marca.sql`
 4. Vá em **Project Settings > API** e copie:
    - **Project URL** (fica `https://xxxxxxxx.supabase.co`)
    - a chave **anon public**
@@ -143,7 +144,7 @@ supabase login
 supabase link --project-ref SEU_PROJECT_REF
 
 supabase secrets set SUPERFRETE_TOKEN="seu-token"
-supabase secrets set SUPERFRETE_CEP_ORIGEM="30160040"
+supabase secrets set SUPERFRETE_CEP_ORIGEM="30160041"
 supabase secrets set SUPERFRETE_USER_AGENT="Kodara Quiz/1.0 (contato@vistakodara.com.br)"
 supabase secrets set SUPERFRETE_SANDBOX="true"
 
@@ -151,7 +152,7 @@ supabase functions deploy calcular-frete
 ```
 
 `SUPERFRETE_CEP_ORIGEM` já vem preenchido com o CEP de onde as peças saem: R. Rio de Janeiro, 462 -
-Sl 2217 - Centro, Belo Horizonte - MG, 30160-040. Confirme esse endereço antes de rodar o comando; a
+Sl 2217 - Centro, Belo Horizonte - MG, 30160-041. Confirme esse endereço antes de rodar o comando; a
 função só usa o CEP (não a rua nem o número) pra cotar o frete.
 
 Teste no sandbox primeiro, confira o log em **Edge Functions > calcular-frete > Logs**, e só então

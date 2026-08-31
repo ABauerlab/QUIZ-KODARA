@@ -116,7 +116,7 @@ ME AVISE NO FIM
 NÃO FAÇA AGORA
 A etapa do frete (SuperFrete) fica pra depois. O CEP de origem já é
 conhecido (R. Rio de Janeiro, 462 - Sl 2217 - Centro, Belo Horizonte - MG,
-30160-040, CEP 30160040), mas falta o token da conta do SuperFrete, que eu
+30160-041, CEP 30160041), mas falta o token da conta do SuperFrete, que eu
 ainda não te passei. Está documentada no DEPLOY.md, etapa 6.
 
 Se travar em qualquer ponto, me mostre o erro exato em vez de tentar

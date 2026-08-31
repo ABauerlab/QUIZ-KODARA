@@ -1,15 +1,18 @@
+import { isCamiseta } from '../lib/pricing'
 import type { Lead } from '../lib/types'
 
 export type StepId =
   | 'p1'
   | 'p2'
+  | 'p2m'
+  | 'p2t'
   | 'p3'
   | 'p4'
-  | 'p5'
   | 'p6'
   | 'p7'
   | 'p8'
   | 'p9'
+  | 'p9d'
   | 'p10'
   | 'p11'
   | 'p12'
@@ -31,6 +34,19 @@ export const STEPS: StepDef[] = [
   },
   { id: 'p2', prompts: ['Que peça você quer produzir?'], counts: true },
   {
+    id: 'p2m',
+    prompts: [
+      'Nossas camisetas já têm modelagem própria, testada e aprovada pela própria Kodara: gola em ribana, tecido que não encolhe, feita por uma marca independente com 5 anos de mercado. Não precisa desenvolver nada do zero, é só escolher a modelagem.',
+      'Qual modelagem combina mais com sua marca?',
+    ],
+    counts: true,
+  },
+  {
+    id: 'p2t',
+    prompts: ['E qual tecido você prefere?'],
+    counts: true,
+  },
+  {
     id: 'p3',
     prompts: ['Quantas peças você tá pensando pra essa primeira produção?'],
     counts: true,
@@ -42,15 +58,11 @@ export const STEPS: StepDef[] = [
     ],
     counts: true,
   },
-  {
-    id: 'p5',
-    prompts: ['Sua peça já tem modelagem ou ficha técnica pronta, ou precisa desenvolver com a gente?'],
-    counts: true,
-  },
   { id: 'p6', prompts: ['Qual cor, ou cores, da peça base?'], counts: true },
   { id: 'p7', prompts: ['Quais tamanhos e quantas peças por tamanho?'], counts: true },
   { id: 'p8', prompts: ['Você já tem uma estampa pronta?'], counts: true },
-  { id: 'p9', prompts: ['Onde e de que tamanho vai a estampa?'], counts: true },
+  { id: 'p9', prompts: ['Onde vai a estampa?'], counts: true },
+  { id: 'p9d', prompts: ['Só mais um detalhe técnico da estampa, pra fechar o valor certinho:'], counts: true },
   { id: 'p10', prompts: ['Pra quando você precisa que essa produção esteja pronta?'], counts: true },
   {
     id: 'p11',
@@ -65,9 +77,17 @@ export const STEPS: StepDef[] = [
   { id: 'final', prompts: [], counts: false },
 ]
 
-/** P4 só existe a partir de 30 peças. */
+/**
+ * P2m/p2t (modelagem e tecido) só existem pra camiseta, que é o produto foco
+ * hoje. P4 (técnica) só existe a partir de 20 peças, abaixo disso é sempre
+ * DTF automático. P9d (cores/tamanho da estampa) só existe quando a técnica
+ * já foi decidida (silk ou dtf), não faz sentido quando o cliente pediu
+ * indicação da Kodara.
+ */
 export function stepIsActive(id: StepId, lead: Lead): boolean {
-  if (id === 'p4') return (lead.quantidade ?? 0) >= 30
+  if (id === 'p2m' || id === 'p2t') return isCamiseta(lead.tipo_peca)
+  if (id === 'p4') return (lead.quantidade ?? 0) >= 20
+  if (id === 'p9d') return lead.tecnica_estampa === 'silk' || lead.tecnica_estampa === 'dtf'
   return true
 }
 
@@ -89,11 +109,22 @@ export function progress(current: StepId | 'abertura', lead: Lead): number {
   return idx / active.length
 }
 
-export const ABERTURA = [
-  'Fala! Bora estruturar sua marca com a gente',
-  'Aqui é o atendimento de Private Label da Kodara. A gente já passou pelo processo inteiro de construir marca própria do zero, então entende cada etapa que você vai viver agora.',
-  'Vou te fazer umas perguntas rápidas pra já sair daqui com tudo certo, modelagem, estampa, quantidade e valor. Leva menos de 2 minutos.',
-]
+/** "Bom dia" até meio-dia, "boa tarde" até 18h, "boa noite" no resto — reforça o atendimento 24/7. */
+export function saudacaoPorHorario(hora: number = new Date().getHours()): string {
+  if (hora >= 5 && hora < 12) return 'Bom dia!'
+  if (hora >= 12 && hora < 18) return 'Boa tarde!'
+  return 'Boa noite!'
+}
+
+/** Monta a abertura com saudação de acordo com o horário de quem está entrando agora. */
+export function aberturaMensagens(hora?: number): string[] {
+  return [
+    `${saudacaoPorHorario(hora)} Bora estruturar sua marca com a gente`,
+    'Aqui é o atendimento de Private Label da Kodara, no ar 24 horas por dia. A gente já passou pelo processo inteiro de construir marca própria do zero, então entende cada etapa que você vai viver agora.',
+    'Vou te fazer umas perguntas rápidas pra já sair daqui com tudo certo, modelagem, estampa, quantidade e valor. Leva menos de 2 minutos.',
+    'Se quiser referência de peças antes de começar, dá uma olhada no nosso varejo em vistakodara.com.br ou no Instagram @vistakodara.',
+  ]
+}
 
 export const MSG_MARCA_NOVA =
   'Show, esse é exatamente o público que a gente mais gosta de ajudar. Se quiser um caminho ainda mais completo pra estruturar a marca inteira, a gente também tem o Kit Marca, mas isso é assunto pra depois. Vamos seguir com a peça primeiro.'
@@ -101,17 +132,25 @@ export const MSG_MARCA_NOVA =
 export const MSG_DTF_AUTOMATICO =
   'Pra essa quantidade a gente trabalha com DTF, que libera produção a partir de 1 peça. Ótimo pra testar antes de produzir em escala.'
 
+export const MSG_QUALIDADE =
+  'Nossas camisetas são usadas e aprovadas pela própria Kodara: gola em ribana, tecido que não encolhe, modelagem própria de uma marca independente com 5 anos de mercado.'
+
+export const MSG_ETIQUETA =
+  'Toda peça já sai com etiqueta interna da marca que fechar com a gente. Se quiser etiqueta bordada, é uma etapa à parte, com tiragem mínima de 1000 unidades a calcular.'
+
 /** Rótulo curto de cada etapa, pro painel dizer onde a pessoa parou. */
 export const ETAPA_LABEL: Record<string, string> = {
   p1: 'Estágio da marca',
   p2: 'Tipo de peça',
+  p2m: 'Modelagem',
+  p2t: 'Tecido',
   p3: 'Quantidade',
   p4: 'Técnica de estampa',
-  p5: 'Modelagem',
   p6: 'Cor da peça',
   p7: 'Grade de tamanhos',
   p8: 'Estampa pronta',
   p9: 'Posição da estampa',
+  p9d: 'Detalhe técnico da estampa',
   p10: 'Prazo',
   p11: 'Nome e WhatsApp',
   p12: 'CEP do frete',
