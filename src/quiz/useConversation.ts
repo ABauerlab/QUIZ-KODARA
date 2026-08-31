@@ -74,5 +74,22 @@ export function useConversation() {
     setReady(false)
   }, [])
 
-  return { messages, typing, ready, pushBot, pushUser }
+  /**
+   * Usado pelo botão de voltar: descarta qualquer mensagem ainda na fila de
+   * "digitando" e corta o histórico de volta pro tamanho de quando aquela
+   * pergunta foi mostrada, sem tocar animação nenhuma.
+   */
+  const rewindTo = useCallback((count: number) => {
+    queue.current = []
+    draining.current = false
+    if (timer.current) {
+      clearTimeout(timer.current)
+      timer.current = null
+    }
+    setTyping(false)
+    setReady(true)
+    setMessages((m) => m.slice(0, count))
+  }, [])
+
+  return { messages, typing, ready, pushBot, pushUser, rewindTo }
 }

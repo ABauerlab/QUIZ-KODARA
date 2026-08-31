@@ -33,6 +33,14 @@ export interface FreteState {
 
 const FRETE_INICIAL: FreteState = { status: 'ocioso', valor: null, servico: null, prazo_dias: null }
 
+/** Um retrato do estado exatamente antes de uma pergunta ser respondida. */
+interface HistoryEntry {
+  step: Current
+  lead: Lead
+  msgCount: number
+  frete: FreteState
+}
+
 export default function Quiz() {
   const [lead, setLead] = useState<Lead>(emptyLead)
   const [current, setCurrent] = useState<Current>('abertura')
@@ -40,8 +48,9 @@ export default function Quiz() {
   const [precos, setPrecos] = useState<PrecoRow[]>([])
   const [frete, setFrete] = useState<FreteState>(FRETE_INICIAL)
   const [splash, setSplash] = useState(true)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
 
-  const { messages, typing, ready, pushBot, pushUser } = useConversation()
+  const { messages, typing, ready, pushBot, pushUser, rewindTo } = useConversation()
   const fim = useRef<HTMLDivElement>(null)
   const abriu = useRef(false)
 
@@ -101,7 +110,16 @@ export default function Quiz() {
     salvarParcial(comValores(base, proximo), 'p12')
   }
 
+  /**
+   * Registra o estado exatamente como está agora, antes de uma resposta mudar
+   * qualquer coisa. É pra onde o botão de voltar restaura.
+   */
+  function pushHistory() {
+    setHistory((h) => [...h, { step: current, lead, msgCount: messages.length, frete }])
+  }
+
   const advance: A.Advance = (patch, userText, interstitial) => {
+    pushHistory()
     const proximoLead = { ...lead, ...patch }
     setLead(proximoLead)
     pushUser(userText)
@@ -122,6 +140,7 @@ export default function Quiz() {
   }
 
   function comecar() {
+    pushHistory()
     pixel.quizStarted()
     pushUser('Bora começar')
     const def = STEPS[0]
@@ -135,6 +154,8 @@ export default function Quiz() {
 
   function responderP8(temArte: boolean) {
     if (temArte) {
+      // Não passa por advance: é um sub-estado da própria P8, não avança pergunta.
+      pushHistory()
       setLead((l) => ({ ...l, tem_arte: true }))
       pushUser('Sim, já tenho o arquivo')
       pushBot([MSG_UPLOAD])
@@ -151,13 +172,31 @@ export default function Quiz() {
     advance({ tem_arte: true, arquivo_estampa_url: path }, path ? `Enviei: ${nomeArquivo}` : 'Mando depois')
   }
 
+  /**
+   * Desfaz a última resposta: volta pra pergunta anterior com a conversa e o
+   * lead exatamente como estavam antes dela. Não recalcula o caminho pra
+   * frente, só reproduz o que já foi de fato percorrido.
+   */
+  function voltar() {
+    if (!history.length) return
+    const entry = history[history.length - 1]
+    setHistory((h) => h.slice(0, -1))
+    rewindTo(entry.msgCount)
+    setLead(entry.lead)
+    setCurrent(entry.step)
+    setFrete(entry.frete)
+    setAguardandoUpload(false)
+    salvarParcial(comValores(entry.lead, entry.frete), entry.step)
+  }
+
   const mostrarResposta = ready && !typing
   const pct = progress(current, lead)
+  const podeVoltar = history.length > 0 && current !== 'final'
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col">
       {splash && <Splash onFim={() => setSplash(false)} />}
-      <Header />
+      <Header podeVoltar={podeVoltar} onVoltar={voltar} />
       <Progress value={pct} />
 
       <main className="flex-1 px-4 pt-4">
