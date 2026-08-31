@@ -20,9 +20,10 @@
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # Logo e ícones têm nome fixo. Se fossem immutable por um ano, trocar a logo
-  # não chegaria em quem já visitou o site. Uma semana com revalidação resolve.
-  <FilesMatch "\.(webp|png|svg|ico)$">
+  # Logo, ícones e a imagem de compartilhamento (og-image.jpg) têm nome fixo.
+  # Se fossem immutable por um ano, trocar qualquer um não chegaria em quem já
+  # visitou o site. Uma semana com revalidação resolve.
+  <FilesMatch "\.(webp|png|jpg|jpeg|svg|ico)$">
     Header set Cache-Control "public, max-age=604800, must-revalidate"
   </FilesMatch>
 

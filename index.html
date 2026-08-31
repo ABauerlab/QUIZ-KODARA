@@ -9,9 +9,38 @@
       name="description"
       content="Atendimento de Private Label da Kodara Streetwear. Responda rápido e saia com modelagem, estampa, quantidade e valor definidos."
     />
+    <!--
+      Fica noindex de propósito: esse quiz só existe pra receber tráfego pago
+      controlado (anúncio, link direto no WhatsApp), não pra aparecer no Google.
+      Ver README, seção "Indexação (noindex)", antes de mudar isso.
+    -->
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href="__SITE_URL__" />
+
+    <!-- Card de compartilhamento (WhatsApp, Instagram, Facebook). __SITE_URL__
+         é resolvido no build por VITE_SITE_URL; sem essa variável, o plugin em
+         vite.config.ts remove as tags que precisam de URL absoluta em vez de
+         publicar link vazio ou apontando pro domínio errado. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Private Label Kodara | Monte sua produção" />
+    <meta
+      property="og:description"
+      content="Atendimento de Private Label da Kodara Streetwear. Responda rápido e saia com modelagem, estampa, quantidade e valor definidos."
+    />
+    <meta property="og:image" content="__SITE_URL__/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="__SITE_URL__" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Private Label Kodara | Monte sua produção" />
+    <meta
+      name="twitter:description"
+      content="Atendimento de Private Label da Kodara Streetwear. Responda rápido e saia com modelagem, estampa, quantidade e valor definidos."
+    />
+    <meta name="twitter:image" content="__SITE_URL__/og-image.jpg" />
+
     <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
     <style>
       /* Ground color antes do CSS do bundle entrar, evita flash branco no mobile. */

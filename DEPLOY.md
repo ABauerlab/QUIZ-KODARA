@@ -143,14 +143,16 @@ supabase login
 supabase link --project-ref SEU_PROJECT_REF
 
 supabase secrets set SUPERFRETE_TOKEN="seu-token"
-supabase secrets set SUPERFRETE_CEP_ORIGEM="00000000"
+supabase secrets set SUPERFRETE_CEP_ORIGEM="30160040"
 supabase secrets set SUPERFRETE_USER_AGENT="Kodara Quiz/1.0 (contato@vistakodara.com.br)"
 supabase secrets set SUPERFRETE_SANDBOX="true"
 
 supabase functions deploy calcular-frete
 ```
 
-O `SUPERFRETE_CEP_ORIGEM` é o CEP de onde as peças saem. Eu não preenchi porque não invento endereço.
+`SUPERFRETE_CEP_ORIGEM` já vem preenchido com o CEP de onde as peças saem: R. Rio de Janeiro, 462 -
+Sl 2217 - Centro, Belo Horizonte - MG, 30160-040. Confirme esse endereço antes de rodar o comando; a
+função só usa o CEP (não a rua nem o número) pra cotar o frete.
 
 Teste no sandbox primeiro, confira o log em **Edge Functions > calcular-frete > Logs**, e só então
 troque `SUPERFRETE_SANDBOX` pra `false`.
@@ -172,11 +174,42 @@ Três coisas que ainda são valor de exemplo, não da Kodara:
 
 ---
 
+## No dia da troca de domínio
+
+Hoje o site roda em `papayawhip-mole-185679.hostingersite.com` (provisório da Hostinger). Quando
+trocar pro domínio final (`quiz.vistakodara.com.br` ou outro), essa é a lista completa do que precisa
+mudar — nessa ordem, pra não derrubar o funil que já está rodando:
+
+1. **Confirme que o domínio novo já resolve e tem SSL** antes de mexer em qualquer outra coisa
+   (repete a etapa 5.3 pro domínio novo).
+2. **`VITE_SITE_URL`** no `.env`: troca pro domínio novo, sem barra no final, e roda `npm run pacote`
+   de novo. Isso atualiza sozinho o `og:url`, `og:image` e o `canonical` no HTML gerado, porque os
+   três lêem dessa variável.
+3. **`VITE_META_PIXEL_ID` não muda.** É o mesmo pixel (`1200831484761221`), o pixel não é amarrado a
+   domínio.
+4. **Meta Business Manager > Configurações da Empresa > Domínios da Marca**: adiciona o domínio novo
+   e revalida a verificação de domínio do pixel. Sem isso alguns recursos do Pixel (Advanced Matching,
+   Domain Verification) ficam associados só ao domínio antigo.
+5. **CORS/allowed origins no Supabase**, se houver alguma regra restrita por domínio (Authentication >
+   URL Configuration, e em qualquer Edge Function que valide `Origin`): adiciona o domínio novo antes
+   de desativar o antigo, pra não ter uma janela sem nenhum domínio autorizado.
+6. **Suba o site no domínio novo e rode o checklist inteiro da seção "Checklist de que está no ar"**
+   de novo, do zero, nesse domínio. Ele é o que efetivamente vai rodar, então merece a mesma
+   conferência que a primeira publicação.
+7. **Só depois de tudo acima confirmado**, atualiza o link nos anúncios ativos (campanha
+   `KODARA PRIVATE LABEL — WHATSAPP` ou qual for). Trocar o link do anúncio antes de validar o domínio
+   novo quebra o funil que já está recebendo tráfego.
+8. O domínio antigo pode continuar no ar por um tempo (não precisa derrubar no mesmo dia), mas depois
+   que o tráfego for todo pro novo, considere um redirect 301 do antigo pro novo em vez de simplesmente
+   desligar, caso algum link antigo ainda circule por aí.
+
+---
+
 ## Atualizar o site depois
 
 ```bash
 npm run pacote
 ```
 
-E repita a etapa 5.2. Toda vez que mudar qualquer `VITE_*` do `.env` (chave PIX, WhatsApp) precisa
-buildar e subir de novo: essas variáveis são assadas no arquivo na hora do build.
+E repita a etapa 5.2. Toda vez que mudar qualquer `VITE_*` do `.env` (chave PIX, WhatsApp, URL do
+site) precisa buildar e subir de novo: essas variáveis são assadas no arquivo na hora do build.
