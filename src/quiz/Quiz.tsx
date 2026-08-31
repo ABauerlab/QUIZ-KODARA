@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Bubble, Header, Progress, Typing } from '../components/Chat'
 import { Splash } from '../components/Splash'
+import { env } from '../lib/env'
 import { calcularFrete } from '../lib/frete'
 import { salvarParcial } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
@@ -193,14 +194,61 @@ export default function Quiz() {
     salvarParcial(comValores(entry.lead, entry.frete), entry.step)
   }
 
+  /**
+   * Recomeça a conversa do zero, sem recarregar a página. O que já foi
+   * enviado continua salvo no banco (cada resposta grava incremental); só a
+   * tela local volta pro início, pra corrigir tudo de uma vez quando o
+   * cliente errou lá atrás e não quer voltar pergunta por pergunta.
+   */
+  function reiniciar() {
+    if (current === 'abertura') return
+    if (!window.confirm('Recomeçar do início? As respostas já preenchidas nessa tela vão sumir.')) return
+    setHistory([])
+    setLead(emptyLead)
+    setFrete(FRETE_INICIAL)
+    setAguardandoUpload(false)
+    setCurrent('abertura')
+    rewindTo(0)
+    pushBot(ABERTURA)
+  }
+
+  /**
+   * Saída de emergência: se o atendimento automático travar ou o cliente só
+   * preferir seguir por gente mesmo, cai pro WhatsApp a qualquer momento,
+   * levando junto o que já foi respondido até aqui.
+   */
+  function mensagemWhatsFallback() {
+    const linhas = ['Oi! Comecei o quiz de Private Label no site mas prefiro continuar por aqui.']
+    if (lead.nome) linhas.push(`Nome: ${lead.nome}`)
+    if (lead.tipo_peca) linhas.push(`Peça: ${lead.tipo_peca}`)
+    if (lead.quantidade) linhas.push(`Quantidade: ${lead.quantidade}`)
+    return encodeURIComponent(linhas.join('\n'))
+  }
+
+  function irDireitoWhats() {
+    pixel.whatsappRedirect(
+      null,
+      { nome: lead.nome, whatsapp: lead.whatsapp },
+      { content_name: 'fallback_atendimento' },
+    )
+    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhatsFallback()}`
+  }
+
   const mostrarResposta = ready && !typing
   const pct = progress(current, lead)
   const podeVoltar = history.length > 0 && current !== 'final'
+  const podeReiniciar = current !== 'abertura'
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col">
       {splash && <Splash onFim={() => setSplash(false)} />}
-      <Header podeVoltar={podeVoltar} onVoltar={voltar} />
+      <Header
+        podeVoltar={podeVoltar}
+        onVoltar={voltar}
+        podeReiniciar={podeReiniciar}
+        onReiniciar={reiniciar}
+        onWhatsapp={irDireitoWhats}
+      />
       <Progress value={pct} />
 
       <main className="flex-1 px-4 pt-4">
