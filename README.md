@@ -239,7 +239,7 @@ supabase login
 supabase link --project-ref SEU_PROJECT_REF
 
 supabase secrets set SUPERFRETE_TOKEN="seu-token"
-supabase secrets set SUPERFRETE_CEP_ORIGEM="00000000"       # CEP da Kodara em BH, só números
+supabase secrets set SUPERFRETE_CEP_ORIGEM="30160040"       # R. Rio de Janeiro, 462 - Centro, BH
 supabase secrets set SUPERFRETE_USER_AGENT="Kodara Quiz/1.0 (contato@vistakodara.com.br)"
 supabase secrets set SUPERFRETE_SANDBOX="true"              # tire quando for pra valer
 
@@ -249,9 +249,10 @@ supabase functions deploy calcular-frete
 O token sai em web.superfrete.com > Integrações > Desenvolvedores > Integrar. O `User-Agent` com
 email de contato é exigido pela API deles.
 
-**O `SUPERFRETE_CEP_ORIGEM` está vazio de propósito.** Não inventei o CEP da loja: coloque o CEP real
-do endereço de onde as peças saem. Enquanto ele não estiver preenchido, a função responde "não
-configurado" e o quiz mostra a mensagem de frete a combinar, sem quebrar.
+`SUPERFRETE_CEP_ORIGEM` já é o CEP real da Kodara (R. Rio de Janeiro, 462 - Sl 2217 - Centro, Belo
+Horizonte - MG, 30160-040). Enquanto o secret não for configurado no Supabase (rodar o `supabase
+secrets set` acima é uma ação que só quem tem acesso à CLI logada no projeto pode fazer), a função
+responde "não configurado" e o quiz mostra a mensagem de frete a combinar, sem quebrar.
 
 ### Peso e caixa
 
@@ -355,6 +356,57 @@ Os dois dependem de `VITE_PRIVACY_URL`. Sem ela, o aviso de texto continua apare
 por falta de link), mas nenhum dos dois vira link clicável. Preencha com a política que já existe em
 vistakodara.com.br antes de rodar tráfego. Isto não é aconselhamento jurídico: se a Kodara ainda não
 tem uma política de privacidade publicada, vale confirmar com quem cuida disso antes de apontar o link.
+
+---
+
+## SEO e compartilhamento
+
+### Card de compartilhamento (Open Graph / Twitter Card)
+
+Quando alguém manda o link do quiz no WhatsApp, Instagram ou Facebook, aparece um card com título,
+descrição e imagem em vez de um link pelado. Isso vem de `og:title`, `og:description`, `og:image`,
+`og:url` e `twitter:card` no `<head>` do `index.html`.
+
+A imagem é `public/og-image.jpg` (1200x630, a logo sobre o fundo preto da marca). Se a identidade
+visual mudar, gere uma nova no mesmo tamanho e mesmo nome de arquivo.
+
+`og:url`, `og:image` e o `canonical` dependem de `VITE_SITE_URL` (ver `.env.example`). Um plugin em
+`vite.config.ts` resolve isso no build: com a variável preenchida, essas tags saem com a URL certa;
+sem ela, o plugin **remove** as tags em vez de publicar `og:url=""` ou apontando pro lugar errado.
+Título e descrição aparecem de qualquer jeito, só a imagem some.
+
+Depois de trocar o link do WhatsApp/Instagram, ferramentas como WhatsApp e Facebook cacheiam o card
+antigo por um tempo. Pra forçar atualização, use o [Sharing Debugger do Facebook](https://developers.facebook.com/tools/debug/)
+colando a URL do site.
+
+### Favicon e ícone de tela inicial
+
+`public/favicon-32.png` e `public/apple-touch-icon.png` já existem e já estão linkados no
+`index.html`. Se a aba do navegador ou o ícone ao adicionar à tela inicial ainda aparecerem sem ícone
+depois de tudo isso, o problema não é o código: é o **site publicado estar atrás do repositório**
+(deploy manual por zip não atualiza sozinho). Rode `npm run pacote` e suba o zip de novo.
+
+### Indexação (`noindex`)
+
+O `<meta name="robots" content="noindex, nofollow">` está ativo de propósito, decisão de quando o
+sistema foi criado: esse quiz existe pra receber tráfego pago controlado (anúncio, link direto no
+WhatsApp), não tráfego de busca orgânica. `noindex` não atrapalha quem chega pelo link (anúncio ou
+WhatsApp) de jeito nenhum — só impede o Google de listar a página pra quem procura "Kodara private
+label" por conta própria.
+
+Isso é uma decisão de negócio, não técnica, e vale confirmar com quem toca a marca:
+
+- **Manter `noindex`** (padrão atual) se o objetivo é manter esse funil só dentro do tráfego pago
+  controlado, sem gente caindo nele por busca orgânica sem ter visto o anúncio antes.
+  - **Cuidado**: com `noindex` mais o `public/robots.txt` desmarcado (`Disallow: /`), rodar Google
+    Ads pra essa URL específica não é afetado, mas qualquer estratégia de SEO orgânico futura pra essa
+    página não vai gerar frutos até isso ser revertido.
+- **Tirar o `noindex`** se fizer sentido a página aparecer em busca depois que o conteúdo estiver
+  validado. Nesse caso, tirar a tag no `index.html` e o `Disallow: /` do `public/robots.txt`, e
+  considerar reescrever a copy pensando também em quem chega sem contexto nenhum de anúncio.
+
+Pra trocar: `index.html`, remover a linha do `<meta name="robots">` e o comentário acima dela;
+`public/robots.txt`, trocar `Disallow: /` por `Allow: /`.
 
 ---
 

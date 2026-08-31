@@ -8,4 +8,10 @@ export const env = {
   privacyUrl: import.meta.env.VITE_PRIVACY_URL ?? '',
 }
 
+/**
+ * VITE_SITE_URL não é lida em runtime (não tem uso dentro da UI): ela resolve
+ * canonical/og:url/og:image direto no HTML, em vite.config.ts. Fica aqui só
+ * documentado, pra achar fácil quando o domínio final trocar.
+ */
+
 export const supabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey)

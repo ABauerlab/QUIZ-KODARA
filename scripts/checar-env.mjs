@@ -16,7 +16,10 @@ const OBRIGATORIAS = [
   ['VITE_META_PIXEL_ID', 'ID do Meta Pixel'],
 ]
 
-const RECOMENDADAS = [['VITE_PIX_KEY', 'chave PIX da tela final, sem ela o bloco do PIX nao aparece']]
+const RECOMENDADAS = [
+  ['VITE_PIX_KEY', 'chave PIX da tela final, sem ela o bloco do PIX nao aparece'],
+  ['VITE_SITE_URL', 'URL publica do site, sem ela o card de compartilhamento (og:image etc) some do HTML'],
+]
 
 if (!existsSync(ARQUIVO)) {
   console.error(`\n  Faltou o arquivo ${ARQUIVO}.`)
