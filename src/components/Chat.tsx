@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { env } from '../lib/env'
 import type { Msg } from '../quiz/useConversation'
 import { MarcaK, Wordmark } from './Logo'
@@ -47,10 +48,29 @@ export function Progress({ value }: { value: number }) {
 export function Header({
   podeVoltar,
   onVoltar,
+  podeReiniciar,
+  onReiniciar,
+  onWhatsapp,
 }: {
   podeVoltar?: boolean
   onVoltar?: () => void
+  podeReiniciar?: boolean
+  onReiniciar?: () => void
+  onWhatsapp?: () => void
 }) {
+  const [menuAberto, setMenuAberto] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Fecha o menu ao clicar fora, igual qualquer menu de app de verdade.
+  useEffect(() => {
+    if (!menuAberto) return
+    function aoClicarFora(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAberto(false)
+    }
+    document.addEventListener('mousedown', aoClicarFora)
+    return () => document.removeEventListener('mousedown', aoClicarFora)
+  }, [menuAberto])
+
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-ink/95 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
@@ -97,6 +117,51 @@ export function Header({
             <span className="text-mute">· responde rápido</span>
           </p>
         </div>
+        {(podeReiniciar || onWhatsapp) && (
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuAberto((v) => !v)}
+              aria-label="Mais opções"
+              aria-expanded={menuAberto}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white transition active:scale-90"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                <circle cx="12" cy="5" r="1.8" />
+                <circle cx="12" cy="12" r="1.8" />
+                <circle cx="12" cy="19" r="1.8" />
+              </svg>
+            </button>
+            {menuAberto && (
+              <div className="absolute right-0 top-full z-20 mt-2 w-60 overflow-hidden rounded-xl border border-line bg-panel shadow-lg">
+                {podeReiniciar && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuAberto(false)
+                      onReiniciar?.()
+                    }}
+                    className="block w-full px-4 py-3 text-left text-sm transition hover:bg-white/5"
+                  >
+                    ↺ Recomeçar do início
+                  </button>
+                )}
+                {onWhatsapp && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuAberto(false)
+                      onWhatsapp()
+                    }}
+                    className="block w-full border-t border-line px-4 py-3 text-left text-sm text-[#25D366] transition hover:bg-white/5"
+                  >
+                    Falar agora no WhatsApp
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {env.privacyUrl && (
           <a
             href={env.privacyUrl}
