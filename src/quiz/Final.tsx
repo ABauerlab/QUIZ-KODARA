@@ -73,7 +73,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         valor_total_com_frete: total,
       })
       setSalvo(true)
-      pixel.quizCompleted(total, { content_name: lead.tipo_peca ?? 'private_label' })
+      pixel.quizCompleted(
+        total,
+        { nome: lead.nome, whatsapp: lead.whatsapp },
+        { content_name: lead.tipo_peca ?? 'private_label' },
+      )
     } catch {
       setErroSalvar(true)
     } finally {
@@ -85,7 +89,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
     // Espera o frete resolver pra que o valor mandado pro Meta e gravado no
     // banco seja o total de verdade, e não o parcial sem frete.
     if (cotandoFrete || tentativa.current > 0) return
-    pixel.initiateCheckout(total, { content_name: lead.tipo_peca ?? 'private_label' })
+    pixel.initiateCheckout(
+      total,
+      { nome: lead.nome, whatsapp: lead.whatsapp },
+      { content_name: lead.tipo_peca ?? 'private_label' },
+    )
     void salvar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cotandoFrete])
@@ -107,7 +115,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   const entrada = total ? total / 2 : null
 
   function irProWhats() {
-    pixel.whatsappRedirect(total, { content_name: lead.tipo_peca ?? 'private_label' })
+    pixel.whatsappRedirect(
+      total,
+      { nome: lead.nome, whatsapp: lead.whatsapp },
+      { content_name: lead.tipo_peca ?? 'private_label' },
+    )
     window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total)}`
   }
 

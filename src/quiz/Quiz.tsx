@@ -125,7 +125,11 @@ export default function Quiz() {
     pushUser(userText)
 
     if (current === 'p11') {
-      pixel.lead(preco.total, { content_name: proximoLead.tipo_peca ?? 'private_label' })
+      pixel.lead(
+        preco.total,
+        { nome: proximoLead.nome, whatsapp: proximoLead.whatsapp },
+        { content_name: proximoLead.tipo_peca ?? 'private_label' },
+      )
     }
 
     const alvo = nextStep(current, proximoLead)
