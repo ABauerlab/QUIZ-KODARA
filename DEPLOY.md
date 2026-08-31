@@ -174,34 +174,33 @@ Três coisas que ainda são valor de exemplo, não da Kodara:
 
 ---
 
-## No dia da troca de domínio
+## Troca de domínio (feita)
 
-Hoje o site roda em `papayawhip-mole-185679.hostingersite.com` (provisório da Hostinger). Quando
-trocar pro domínio final (`quiz.vistakodara.com.br` ou outro), essa é a lista completa do que precisa
-mudar — nessa ordem, pra não derrubar o funil que já está rodando:
+O site saiu do domínio provisório da Hostinger e já está em `quiz.vistakodara.com.br`.
+`VITE_SITE_URL` no `.env.example` já reflete isso — se o `.env` real usado no último build ainda
+apontava pro domínio antigo, o `og:url`/`og:image`/`canonical` do site publicado estão errados até o
+próximo `npm run pacote` com a variável certa.
 
-1. **Confirme que o domínio novo já resolve e tem SSL** antes de mexer em qualquer outra coisa
-   (repete a etapa 5.3 pro domínio novo).
-2. **`VITE_SITE_URL`** no `.env`: troca pro domínio novo, sem barra no final, e roda `npm run pacote`
-   de novo. Isso atualiza sozinho o `og:url`, `og:image` e o `canonical` no HTML gerado, porque os
-   três lêem dessa variável.
-3. **`VITE_META_PIXEL_ID` não muda.** É o mesmo pixel (`1200831484761221`), o pixel não é amarrado a
-   domínio.
-4. **Meta Business Manager > Configurações da Empresa > Domínios da Marca**: adiciona o domínio novo
-   e revalida a verificação de domínio do pixel. Sem isso alguns recursos do Pixel (Advanced Matching,
-   Domain Verification) ficam associados só ao domínio antigo.
-5. **CORS/allowed origins no Supabase**, se houver alguma regra restrita por domínio (Authentication >
-   URL Configuration, e em qualquer Edge Function que valide `Origin`): adiciona o domínio novo antes
-   de desativar o antigo, pra não ter uma janela sem nenhum domínio autorizado.
-6. **Suba o site no domínio novo e rode o checklist inteiro da seção "Checklist de que está no ar"**
-   de novo, do zero, nesse domínio. Ele é o que efetivamente vai rodar, então merece a mesma
-   conferência que a primeira publicação.
-7. **Só depois de tudo acima confirmado**, atualiza o link nos anúncios ativos (campanha
-   `KODARA PRIVATE LABEL — WHATSAPP` ou qual for). Trocar o link do anúncio antes de validar o domínio
-   novo quebra o funil que já está recebendo tráfego.
-8. O domínio antigo pode continuar no ar por um tempo (não precisa derrubar no mesmo dia), mas depois
-   que o tráfego for todo pro novo, considere um redirect 301 do antigo pro novo em vez de simplesmente
-   desligar, caso algum link antigo ainda circule por aí.
+Curl e WebFetch desta sessão não alcançam `vistakodara.com.br` (proxy de rede bloqueia o domínio, o
+mesmo bloqueio de quando era o domínio provisório), então o que segue **não foi confirmado contra o
+site publicado**, só contra o código. Confira manualmente:
+
+1. **`og:url`/`canonical` no HTML publicado** apontam pra `https://quiz.vistakodara.com.br`, não pro
+   domínio antigo. Ver o código-fonte da página (`Ctrl+U` no navegador) ou o
+   [Sharing Debugger do Facebook](https://developers.facebook.com/tools/debug/).
+2. **`VITE_META_PIXEL_ID` não muda.** É o mesmo pixel (`1200831484761221`), não é amarrado a domínio.
+3. **Meta Business Manager > Configurações da Empresa > Domínios da Marca**: adicionar `vistakodara.com.br`
+   e revalidar a verificação de domínio do pixel, se ainda não tiver feito. Sem isso alguns recursos
+   do Pixel (Advanced Matching, Domain Verification) ficam associados só ao domínio antigo.
+4. **CORS/allowed origins no Supabase**, se houver alguma regra restrita por domínio (Authentication >
+   URL Configuration, e em qualquer Edge Function que valide `Origin`): confirma que
+   `quiz.vistakodara.com.br` está autorizado.
+5. **Rode o checklist inteiro da seção "Checklist de que está no ar"** nesse domínio, do zero — é o
+   que efetivamente está recebendo tráfego agora.
+6. **Anúncios ativos** (campanha `KODARA PRIVATE LABEL — WHATSAPP` ou qual for): confirma que já
+   apontam pro domínio novo.
+7. Considera um redirect 301 do domínio antigo pro novo em vez de simplesmente desligá-lo, caso algum
+   link antigo ainda circule por aí.
 
 ---
 

@@ -75,13 +75,27 @@ export function Header({
             </svg>
           </button>
         )}
-        {/* O K da logo como foto de contato, mantendo a metáfora do WhatsApp. */}
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel">
-          <MarcaK className="h-[19px] w-auto text-white" />
+        {/* O K da logo como foto de contato, com o statusinho verde de "online"
+            no canto, igual perfil de contato no WhatsApp/Instagram. */}
+        <div className="relative shrink-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel">
+            <MarcaK className="h-[19px] w-auto text-white" />
+          </div>
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-ink bg-[#25D366]"
+          />
         </div>
         <div className="min-w-0 flex-1 leading-tight">
           <Wordmark className="h-[21px] w-auto text-white" />
-          <p className="mt-1 text-xs text-mute">Private Label, responde rápido</p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#25D366] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#25D366]" />
+            </span>
+            <span className="font-medium text-[#25D366]">online</span>
+            <span className="text-mute">· responde rápido</span>
+          </p>
         </div>
         {env.privacyUrl && (
           <a
