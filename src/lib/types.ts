@@ -45,6 +45,12 @@ export interface Lead {
   kit_marca_itens: string[] | null
   /** Texto livre pra quando o cliente quer outro material gráfico fora do catálogo do Kit Marca. */
   kit_marca_outros: string | null
+  /** UTM capturado na URL de entrada do quiz, pra saber qual anúncio trouxe o lead. */
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_content: string | null
+  utm_term: string | null
   /** Preenchido pelo banco, não vai no payload de salvamento. */
   session_id?: string
   status?: LeadStatus
@@ -90,6 +96,11 @@ export const emptyLead: Lead = {
   valor_total_com_frete: null,
   kit_marca_itens: null,
   kit_marca_outros: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
+  utm_content: null,
+  utm_term: null,
 }
 
 export const TECNICA_LABEL: Record<TecnicaEstampa, string> = {

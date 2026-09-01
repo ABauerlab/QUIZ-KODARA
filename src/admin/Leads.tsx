@@ -103,6 +103,14 @@ function Detalhe({
         }
       />
       <Campo label="Kit Marca — outros materiais" value={lead.kit_marca_outros} />
+      <Campo
+        label="Origem (UTM)"
+        value={
+          [lead.utm_campaign, lead.utm_content, lead.utm_source, lead.utm_medium]
+            .filter(Boolean)
+            .join(' / ') || null
+        }
+      />
       <Campo label="Prazo" value={lead.prazo_desejado} />
       <Campo label="Arte pronta" value={lead.tem_arte ? 'Sim' : 'Não'} />
       <Campo label="CEP de entrega" value={lead.cep_destino} />

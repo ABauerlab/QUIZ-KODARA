@@ -105,7 +105,13 @@ No painel do Supabase, abra o **SQL Editor** e rode **dois arquivos, nessa ordem
   `aplicacoes`, `kit_marca_itens` e `kit_marca_outros` no lead
 - atualiza `salvar_lead` pra gravar esses campos novos
 
-Os três são idempotentes, rodar de novo não quebra nada.
+**`supabase/04-utm.sql`** (origem do lead) cria:
+
+- os campos `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` e `utm_term` no lead
+- atualiza `salvar_lead` pra gravar o UTM só na criação do lead (não deixa uma resposta
+  seguinte sem UTM apagar a origem já capturada)
+
+Os quatro são idempotentes, rodar de novo não quebra nada.
 
 ### 2. O que o RLS garante
 

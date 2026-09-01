@@ -62,6 +62,11 @@ function payload(lead: Lead, etapa: string) {
     valor_total_com_frete: lead.valor_total_com_frete,
     kit_marca_itens: lead.kit_marca_itens,
     kit_marca_outros: lead.kit_marca_outros,
+    utm_source: lead.utm_source,
+    utm_medium: lead.utm_medium,
+    utm_campaign: lead.utm_campaign,
+    utm_content: lead.utm_content,
+    utm_term: lead.utm_term,
     etapa_atual: etapa,
   }
 }

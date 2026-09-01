@@ -36,7 +36,7 @@ export const STEPS: StepDef[] = [
   {
     id: 'p2m',
     prompts: [
-      'Nossas camisetas já têm modelagem própria, testada e aprovada pela própria Kodara: gola em ribana, tecido que não encolhe, feita por uma marca independente com 5 anos de mercado. Não precisa desenvolver nada do zero, é só escolher a modelagem.',
+      'Nossas camisetas já têm modelagem própria, pronta. Não precisa desenvolver nada do zero, é só escolher.',
       'Qual modelagem combina mais com sua marca?',
     ],
     counts: true,
