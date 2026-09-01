@@ -343,6 +343,19 @@ export default function Quiz() {
               {current === 'p10' && <A.P10 lead={lead} advance={advance} />}
               {current === 'p11' && <A.P11 lead={lead} advance={advance} />}
               {current === 'p12' && <A.P12 lead={lead} advance={advance} />}
+
+              {/* Além do chevron discreto no header, o botão de voltar
+                  também aparece aqui, visível embaixo de cada pergunta —
+                  ninguém devia precisar procurar pra corrigir uma resposta. */}
+              {podeVoltar && (
+                <button
+                  type="button"
+                  onClick={voltar}
+                  className="mt-3 block text-sm font-medium text-mute underline decoration-dotted underline-offset-4 transition active:scale-95"
+                >
+                  ← Corrigir resposta anterior
+                </button>
+              )}
             </div>
           )}
 

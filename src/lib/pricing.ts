@@ -77,14 +77,19 @@ export function calcularPrecoLead(rows: PrecoRow[], lead: Lead): PrecoLeadResult
 
   if (custoBasePorTipoPeca(lead.tipo_peca) !== null) {
     if (lead.tecnica_estampa !== 'silk' && lead.tecnica_estampa !== 'dtf') return SEM_PRECO_LEAD
+    // aplicacoes_detalhe é a fonte de verdade (uma medida por aplicação);
+    // estampa_largura_cm/altura_cm cobrem só leads salvos antes dessa mudança.
+    const aplicacoesDtf = lead.aplicacoes_detalhe?.length
+      ? lead.aplicacoes_detalhe.map((a) => ({ larguraCm: a.largura_cm, alturaCm: a.altura_cm }))
+      : lead.estampa_largura_cm && lead.estampa_altura_cm
+        ? [{ larguraCm: lead.estampa_largura_cm, alturaCm: lead.estampa_altura_cm }]
+        : null
     const r = calcularPrecoPeca({
       tipoPeca: lead.tipo_peca,
       quantidade: lead.quantidade,
       tecnica: lead.tecnica_estampa,
       coresEstampa: lead.cores_estampa,
-      estampaLarguraCm: lead.estampa_largura_cm,
-      estampaAlturaCm: lead.estampa_altura_cm,
-      aplicacoes: lead.aplicacoes,
+      aplicacoesDtf,
     })
     return {
       total: r.precoTotal,

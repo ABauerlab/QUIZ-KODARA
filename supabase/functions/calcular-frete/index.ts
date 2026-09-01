@@ -154,7 +154,14 @@ Deno.serve(async (req: Request) => {
     .select('tipo_peca, peso_kg, largura_cm, comprimento_cm, altura_unitaria_cm')
 
   const normaliza = (v: string) => v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
-  const linha = (pesos ?? []).find((p) => normaliza(p.tipo_peca) === normaliza(tipoPeca))
+  const alvo = normaliza(tipoPeca)
+  // Match exato primeiro; se o texto da peca mudar no quiz (ex: renomear
+  // "Moletom ou Corta-vento" pra so "Moletom") sem atualizar essa tabela na
+  // hora, um match por conter ainda acha a linha certa em vez de cair no
+  // "sem peso" por causa de uma diferenca so de rotulo.
+  const linha =
+    (pesos ?? []).find((p) => normaliza(p.tipo_peca) === alvo) ??
+    (pesos ?? []).find((p) => normaliza(p.tipo_peca).includes(alvo) || alvo.includes(normaliza(p.tipo_peca)))
 
   // Peça fora da tabela de peso: não dá pra cotar honestamente, então avisa.
   if (!linha) return json({ ok: false, motivo: 'peca_sem_peso' })

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { formatBRL, formatDate, phoneDigits } from '../lib/format'
+import { dtfTexto, formatBRL, formatDate, phoneDigits } from '../lib/format'
 import { BUCKET_ESTAMPAS } from '../quiz/UploadEstampa'
 import { ETAPA_LABEL } from '../quiz/steps'
 import {
@@ -86,11 +86,7 @@ function Detalhe({
       />
       <Campo
         label="Tamanho da estampa (DTF)"
-        value={
-          lead.tecnica_estampa === 'dtf' && lead.estampa_largura_cm && lead.estampa_altura_cm
-            ? `${lead.estampa_largura_cm}x${lead.estampa_altura_cm}cm${lead.aplicacoes ? `, ${lead.aplicacoes} aplicações` : ''}`
-            : null
-        }
+        value={lead.tecnica_estampa === 'dtf' ? dtfTexto(lead) : null}
       />
       <Campo
         label="Kit Marca"
@@ -103,6 +99,7 @@ function Detalhe({
         }
       />
       <Campo label="Kit Marca — outros materiais" value={lead.kit_marca_outros} />
+      <Campo label="Retirada na loja" value={lead.retirada_loja ? 'Sim' : null} />
       <Campo
         label="Origem (UTM)"
         value={

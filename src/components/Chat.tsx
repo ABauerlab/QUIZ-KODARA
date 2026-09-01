@@ -80,7 +80,7 @@ export function Header({
             type="button"
             onClick={onVoltar}
             aria-label="Voltar pra pergunta anterior"
-            className="-ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition active:scale-90"
+            className="-ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-white transition active:scale-90"
           >
             <svg
               viewBox="0 0 24 24"

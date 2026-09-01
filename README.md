@@ -111,7 +111,15 @@ No painel do Supabase, abra o **SQL Editor** e rode **dois arquivos, nessa ordem
 - atualiza `salvar_lead` pra gravar o UTM só na criação do lead (não deixa uma resposta
   seguinte sem UTM apagar a origem já capturada)
 
-Os quatro são idempotentes, rodar de novo não quebra nada.
+**`supabase/05-dtf-varias-aplicacoes-retirada.sql`** (DTF por aplicação + retirada na loja) cria:
+
+- o campo `aplicacoes_detalhe` (uma medida largura x altura por aplicação de DTF, em vez de uma
+  medida só pra todas) e `retirada_loja` no lead
+- renomeia a linha `Moletom ou Corta-vento` pra `Moletom` em `peso_estimado_pecas`, acompanhando a
+  mudança do nome da peça no quiz
+- atualiza `salvar_lead` pra gravar os campos novos
+
+Os cinco são idempotentes, rodar de novo não quebra nada.
 
 ### 2. O que o RLS garante
 
