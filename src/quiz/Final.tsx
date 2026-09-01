@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Wordmark } from '../components/Logo'
 import { env } from '../lib/env'
-import { formatBRL } from '../lib/format'
+import { dtfTexto, formatBRL } from '../lib/format'
 import { salvarCompleto } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { KIT_MARCA_ITENS, TECNICA_LABEL, type Lead } from '../lib/types'
@@ -40,6 +40,7 @@ function mensagemWhats(
   total: number | null,
   kitItens: string[],
   kitOutros: string,
+  retiradaLoja: boolean,
 ) {
   const linhas = [
     'Fala Kodara! Acabei de fechar meu briefing no quiz de Private Label.',
@@ -50,9 +51,9 @@ function mensagemWhats(
     lead.tecido ? `Tecido: ${lead.tecido}` : null,
     `Quantidade: ${lead.quantidade ?? ''}`,
     `Técnica: ${lead.tecnica_estampa ? TECNICA_LABEL[lead.tecnica_estampa] : ''}`,
-    `CEP: ${lead.cep_destino ?? ''}`,
+    retiradaLoja ? 'Entrega: retirada na loja (Praça Sete, BH)' : `CEP: ${lead.cep_destino ?? ''}`,
     `Peças: ${pecas ? formatBRL(pecas) : 'sob consulta'}`,
-    `Frete: ${valorFrete ? formatBRL(valorFrete) : 'a calcular'}`,
+    `Frete: ${retiradaLoja ? 'grátis, retirada na loja' : valorFrete ? formatBRL(valorFrete) : 'a calcular'}`,
     kitItens.length
       ? `Kit Marca: ${kitItens.map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c).join(', ')}`
       : null,
@@ -90,9 +91,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   const [copiado, setCopiado] = useState(false)
   const [kitItens, setKitItens] = useState<string[]>([])
   const [kitOutros, setKitOutros] = useState('')
+  const [retiradaLoja, setRetiradaLoja] = useState(false)
   const tentativa = useRef(0)
 
-  const valorFrete = frete.status === 'ok' ? frete.valor : null
+  // Quem retira na loja não paga frete nenhum, mesmo que uma cotação já tenha voltado.
+  const valorFrete = retiradaLoja ? 0 : frete.status === 'ok' ? frete.valor : null
   const kitMarcaTotal = useMemo(
     () => kitItens.reduce((soma, chave) => soma + precoKitMarcaItem(chave, lead.quantidade), 0),
     [kitItens, lead.quantidade],
@@ -117,6 +120,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         preco_unitario: precoUnitario,
         valor_frete_calculado: valorFrete,
         valor_total_com_frete: total,
+        retirada_loja: retiradaLoja,
         kit_marca_itens: kitItens.length ? kitItens : null,
         kit_marca_outros: kitOutros.trim() || null,
       })
@@ -146,13 +150,13 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cotandoFrete])
 
-  // Reflete a escolha do Kit Marca no lead salvo, já que ela acontece depois
-  // do salvamento inicial (o upsell é oferecido só depois do resumo pronto).
+  // Reflete a escolha do Kit Marca e da retirada na loja no lead salvo, já
+  // que as duas acontecem depois do salvamento inicial.
   useEffect(() => {
     if (!salvo) return
     void salvar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kitItens, kitOutros])
+  }, [kitItens, kitOutros, retiradaLoja])
 
   // O lead nunca fica preso: depois de uma tentativa que falhou, o WhatsApp libera.
   const liberado = !cotandoFrete && (salvo || (erroSalvar && !salvando))
@@ -168,6 +172,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   }
 
   const grade = gradeTexto(lead)
+  const dtfResumo = dtfTexto(lead)
   const entrada = total ? total / 2 : null
 
   function irProWhats() {
@@ -176,7 +181,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
       { nome: lead.nome, whatsapp: lead.whatsapp },
       { content_name: lead.tipo_peca ?? 'private_label' },
     )
-    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total, kitItens, kitOutros)}`
+    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total, kitItens, kitOutros, retiradaLoja)}`
   }
 
   return (
@@ -202,11 +207,8 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
           {lead.tecnica_estampa === 'silk' && lead.cores_estampa && (
             <Linha label="Cores da estampa" value={`${lead.cores_estampa}`} />
           )}
-          {lead.tecnica_estampa === 'dtf' && lead.estampa_largura_cm && lead.estampa_altura_cm && (
-            <Linha
-              label="Tamanho da estampa"
-              value={`${lead.estampa_largura_cm}x${lead.estampa_altura_cm}cm${lead.aplicacoes ? `, ${lead.aplicacoes} aplicação${lead.aplicacoes > 1 ? 'ões' : ''}` : ''}`}
-            />
+          {lead.tecnica_estampa === 'dtf' && dtfResumo && (
+            <Linha label="Tamanho da estampa" value={dtfResumo} />
           )}
           <Linha label="Arte" value={lead.tem_arte ? 'Já tem arquivo' : 'Kodara cria a estampa'} />
           {lead.prazo_desejado && <Linha label="Prazo" value={lead.prazo_desejado} />}
@@ -224,13 +226,28 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
             <div className="mt-2 flex justify-between gap-4 text-sm">
               <span className="text-mute">Frete</span>
               <span className="font-medium">
-                {cotandoFrete
-                  ? 'calculando...'
-                  : valorFrete !== null
-                    ? formatBRL(valorFrete)
-                    : 'a combinar'}
+                {retiradaLoja
+                  ? 'Grátis (retirada na loja)'
+                  : cotandoFrete
+                    ? 'calculando...'
+                    : valorFrete !== null
+                      ? formatBRL(valorFrete)
+                      : 'a combinar'}
               </span>
             </div>
+            <label className="mt-2 flex items-center gap-2 text-xs text-mute">
+              <input
+                type="checkbox"
+                checked={retiradaLoja}
+                onChange={(e) => setRetiradaLoja(e.target.checked)}
+              />
+              Prefiro retirar na loja (Praça Sete, BH) em vez de receber por frete
+            </label>
+            {retiradaLoja && (
+              <p className="mt-1 text-xs text-mute">
+                Retirada na Rua Rio de Janeiro, 462, sala 2217, Praça Sete, Belo Horizonte – MG.
+              </p>
+            )}
             {kitMarcaTotal > 0 && (
               <div className="mt-2 flex justify-between gap-4 text-sm">
                 <span className="text-mute">Kit Marca</span>
@@ -255,10 +272,10 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
           </>
         )}
 
-        {!cotandoFrete && valorFrete === null && (
+        {!retiradaLoja && !cotandoFrete && valorFrete === null && (
           <p className="mt-2 text-xs text-mute">{MSG_FRETE_INDISPONIVEL}.</p>
         )}
-        {valorFrete !== null && frete.servico && (
+        {!retiradaLoja && valorFrete !== null && frete.servico && (
           <p className="mt-2 text-xs text-mute">
             {frete.servico}
             {frete.prazo_dias ? `, cerca de ${frete.prazo_dias} dias úteis depois de pronto` : ''}
@@ -267,7 +284,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
 
         <p className="mt-3 text-sm">
           Pra dar início na produção, é 50% agora via PIX{entrada ? ` (${formatBRL(entrada)})` : ''} e o
-          restante na entrega.
+          restante antes do envio.
         </p>
       </div>
 

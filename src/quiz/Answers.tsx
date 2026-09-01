@@ -72,7 +72,7 @@ function FreeText({
   )
 }
 
-const PECAS = ['Camiseta', 'Moletom ou Corta-vento', 'Boné', 'Ecobag']
+const PECAS = ['Camiseta', 'Moletom', 'Boné', 'Ecobag']
 
 export function P2({ advance }: Props) {
   const [outra, setOutra] = useState(false)
@@ -392,9 +392,6 @@ const CONTAGEM_APLICACOES: { valor: number; label: string }[] = [
 /** Detalhe técnico que fecha o custo real: cores no silk, tamanho e aplicações no DTF. */
 export function P9D({ lead, advance }: Props) {
   const [cores, setCores] = useState<number | null>(null)
-  const [largura, setLargura] = useState('')
-  const [altura, setAltura] = useState('')
-  const [aplicacoes, setAplicacoes] = useState<number | null>(null)
 
   if (lead.tecnica_estampa === 'silk') {
     return (
@@ -421,52 +418,94 @@ export function P9D({ lead, advance }: Props) {
     )
   }
 
-  const w = Number.parseInt(largura, 10)
-  const h = Number.parseInt(altura, 10)
-  const medidasOk = Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0
-  const ok = medidasOk && !!aplicacoes
+  return <P9DDtf advance={advance} />
+}
+
+/**
+ * Cada aplicação de DTF (frente, costas, etiqueta...) pode ter um tamanho de
+ * arte diferente, e o custo do material depende do tamanho de cada uma, não
+ * só da primeira. Por isso pede uma medida de largura x altura por aplicação
+ * escolhida, em vez de uma medida única pra todas.
+ */
+function P9DDtf({ advance }: Pick<Props, 'advance'>) {
+  const [aplicacoes, setAplicacoes] = useState<number | null>(null)
+  const [medidas, setMedidas] = useState<{ largura: string; altura: string }[]>([])
+
+  function escolherAplicacoes(n: number) {
+    setAplicacoes(n)
+    setMedidas((atual) => {
+      const proximo = atual.slice(0, n)
+      while (proximo.length < n) proximo.push({ largura: '', altura: '' })
+      return proximo
+    })
+  }
+
+  function setMedida(i: number, campo: 'largura' | 'altura', valor: string) {
+    setMedidas((atual) =>
+      atual.map((m, idx) => (idx === i ? { ...m, [campo]: valor.replace(/\D/g, '').slice(0, 3) } : m)),
+    )
+  }
+
+  const parsed = medidas.map((m) => ({
+    largura_cm: Number.parseInt(m.largura, 10),
+    altura_cm: Number.parseInt(m.altura, 10),
+  }))
+  const medidasOk =
+    !!aplicacoes &&
+    parsed.length === aplicacoes &&
+    parsed.every((p) => Number.isFinite(p.largura_cm) && p.largura_cm > 0 && Number.isFinite(p.altura_cm) && p.altura_cm > 0)
 
   return (
     <form
       className="grid gap-3"
       onSubmit={(e) => {
         e.preventDefault()
-        if (!ok) return
+        if (!medidasOk) return
+        const texto = parsed.map((p) => `${p.largura_cm}x${p.altura_cm}cm`).join(' + ')
         advance(
-          { estampa_largura_cm: w, estampa_altura_cm: h, aplicacoes },
-          `${w}x${h}cm, ${aplicacoes} aplicação${aplicacoes! > 1 ? 'ões' : ''}`,
+          {
+            aplicacoes,
+            aplicacoes_detalhe: parsed,
+            estampa_largura_cm: parsed[0].largura_cm,
+            estampa_altura_cm: parsed[0].altura_cm,
+          },
+          texto,
         )
       }}
     >
-      <p className="text-sm text-mute">Tamanho da estampa (cm)</p>
-      <div className="flex items-center gap-2">
-        <input
-          className="field flex-1"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          placeholder="Largura"
-          value={largura}
-          onChange={(e) => setLargura(e.target.value.replace(/\D/g, '').slice(0, 3))}
-        />
-        <span className="text-mute">x</span>
-        <input
-          className="field flex-1"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          placeholder="Altura"
-          value={altura}
-          onChange={(e) => setAltura(e.target.value.replace(/\D/g, '').slice(0, 3))}
-        />
-      </div>
       <p className="text-sm text-mute">Quantas aplicações (posições diferentes de estampa)?</p>
       <div className="flex flex-wrap gap-2">
         {CONTAGEM_APLICACOES.map((a) => (
-          <Chip key={a.valor} active={aplicacoes === a.valor} onClick={() => setAplicacoes(a.valor)}>
+          <Chip key={a.valor} active={aplicacoes === a.valor} onClick={() => escolherAplicacoes(a.valor)}>
             {a.label}
           </Chip>
         ))}
       </div>
-      <button className="btn-primary" disabled={!ok}>
+      {medidas.map((m, i) => (
+        <div key={i} className="grid gap-1">
+          <p className="text-sm text-mute">Tamanho da aplicação {i + 1} (cm)</p>
+          <div className="flex items-center gap-2">
+            <input
+              className="field flex-1"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Largura"
+              value={m.largura}
+              onChange={(e) => setMedida(i, 'largura', e.target.value)}
+            />
+            <span className="text-mute">x</span>
+            <input
+              className="field flex-1"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Altura"
+              value={m.altura}
+              onChange={(e) => setMedida(i, 'altura', e.target.value)}
+            />
+          </div>
+        </div>
+      ))}
+      <button className="btn-primary" disabled={!medidasOk}>
         Continuar
       </button>
     </form>

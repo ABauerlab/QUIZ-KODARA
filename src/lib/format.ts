@@ -41,3 +41,22 @@ export function cepDigits(masked: string) {
 export function isValidCep(masked: string) {
   return cepDigits(masked).length === 8
 }
+
+interface MedidasDtf {
+  aplicacoes_detalhe?: { largura_cm: number; altura_cm: number }[] | null
+  estampa_largura_cm?: number | null
+  estampa_altura_cm?: number | null
+}
+
+/** "30x40cm" pra uma aplicação, "30x40cm + 20x20cm (2 aplicações)" pra mais de uma. */
+export function dtfTexto(lead: MedidasDtf): string | null {
+  const medidas = lead.aplicacoes_detalhe?.length
+    ? lead.aplicacoes_detalhe
+    : lead.estampa_largura_cm && lead.estampa_altura_cm
+      ? [{ largura_cm: lead.estampa_largura_cm, altura_cm: lead.estampa_altura_cm }]
+      : []
+  if (!medidas.length) return null
+  const partes = medidas.map((m) => `${m.largura_cm}x${m.altura_cm}cm`).join(' + ')
+  if (medidas.length <= 1) return partes
+  return `${partes} (${medidas.length} aplicações)`
+}

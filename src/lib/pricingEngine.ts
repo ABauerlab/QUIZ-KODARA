@@ -108,14 +108,30 @@ export function arredondarComercial(valor: number): number {
   return candidato >= valor ? candidato : Number((candidato + 10).toFixed(2))
 }
 
+export interface AplicacaoDtf {
+  larguraCm: number
+  alturaCm: number
+}
+
 export interface PrecoPecaInput {
   tipoPeca: string | null | undefined
   quantidade: number
   tecnica: 'silk' | 'dtf'
   coresEstampa?: number | null
-  estampaLarguraCm?: number | null
-  estampaAlturaCm?: number | null
-  aplicacoes?: number | null
+  /** Uma entrada por aplicação de DTF — cada posição pode ter um tamanho de arte diferente. */
+  aplicacoesDtf?: AplicacaoDtf[] | null
+}
+
+/** Soma o custo de material + aplicação de cada posição de DTF, cada uma com seu próprio tamanho. */
+export function custoDtfTotalPorPeca(aplicacoes: AplicacaoDtf[]): CustoDtfResult {
+  let custoPorPeca = 0
+  let alerta: AlertaProducao | null = null
+  for (const a of aplicacoes) {
+    const r = custoDtfPorPeca(a.larguraCm, a.alturaCm, 1)
+    custoPorPeca += r.custoPorPeca
+    if (r.alerta && !alerta) alerta = r.alerta
+  }
+  return { custoPorPeca, alerta }
 }
 
 export interface PrecoCamisetaResult {
@@ -166,11 +182,9 @@ export function calcularPrecoPeca(input: PrecoPecaInput): PrecoCamisetaResult {
     // Uma tela por cor: custo fixo do pedido, depois rateado pela quantidade.
     custoFixo = cores * CUSTO_GRAVACAO_TELA
   } else {
-    const largura = input.estampaLarguraCm
-    const altura = input.estampaAlturaCm
-    const aplicacoes = input.aplicacoes
-    if (!largura || !altura || !aplicacoes) return SEM_RESULTADO
-    const dtf = custoDtfPorPeca(largura, altura, aplicacoes)
+    const aplicacoes = input.aplicacoesDtf
+    if (!aplicacoes || !aplicacoes.length) return SEM_RESULTADO
+    const dtf = custoDtfTotalPorPeca(aplicacoes)
     custoAdicionalPorPeca = dtf.custoPorPeca
     alerta = dtf.alerta
   }
@@ -200,6 +214,6 @@ export function calcularPrecoPeca(input: PrecoPecaInput): PrecoCamisetaResult {
 
 // CUSTO_CAMISETA_GROSSA fica disponível pro futuro (tecido/gramatura mais
 // estruturada), mas nenhum dos tecidos do catálogo atual (Penteado,
-// Confort/Ceramic, Poliamida, Dryfit, Elastano) foi marcado pela Kodara como
-// "grossa" ainda — por enquanto toda camiseta usa CUSTO_CAMISETA_PADRAO, pra
-// não inventar essa diferenciação sem confirmação.
+// Confort/Ceramic) foi marcado pela Kodara como "grossa" ainda — por
+// enquanto toda camiseta usa CUSTO_CAMISETA_PADRAO, pra não inventar essa
+// diferenciação sem confirmação.

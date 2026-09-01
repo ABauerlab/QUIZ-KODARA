@@ -22,12 +22,14 @@ export interface Lead {
   tecido: string | null
   /** Quantidade de cores da estampa, usado no cálculo de custo quando a técnica é silk. */
   cores_estampa: number | null
-  /** Largura da estampa em cm, usado no cálculo de custo quando a técnica é DTF. */
+  /** Largura em cm da primeira aplicação de DTF (espelha aplicacoes_detalhe[0], mantido pra leitura rápida). */
   estampa_largura_cm: number | null
-  /** Altura da estampa em cm, usado no cálculo de custo quando a técnica é DTF. */
+  /** Altura em cm da primeira aplicação de DTF (espelha aplicacoes_detalhe[0], mantido pra leitura rápida). */
   estampa_altura_cm: number | null
   /** Quantidade de posições de aplicação (frente, frente+costas, etc.), usado no custo do DTF. */
   aplicacoes: number | null
+  /** Uma medida (largura x altura, cm) por aplicação de DTF — cada posição pode ter um tamanho de arte diferente. */
+  aplicacoes_detalhe: { largura_cm: number; altura_cm: number }[] | null
   cores: string | null
   grade_tamanhos: GradeTamanhos | null
   tem_arte: boolean | null
@@ -41,6 +43,8 @@ export interface Lead {
   cep_destino: string | null
   valor_frete_calculado: number | null
   valor_total_com_frete: number | null
+  /** Cliente escolheu retirar na loja (Praça Sete, BH) em vez de receber por frete. */
+  retirada_loja: boolean | null
   /** Itens do Kit Marca escolhidos como upsell na tela final (chaves de KIT_MARCA_ITENS). */
   kit_marca_itens: string[] | null
   /** Texto livre pra quando o cliente quer outro material gráfico fora do catálogo do Kit Marca. */
@@ -81,6 +85,7 @@ export const emptyLead: Lead = {
   estampa_largura_cm: null,
   estampa_altura_cm: null,
   aplicacoes: null,
+  aplicacoes_detalhe: null,
   cores: null,
   grade_tamanhos: null,
   tem_arte: null,
@@ -94,6 +99,7 @@ export const emptyLead: Lead = {
   cep_destino: null,
   valor_frete_calculado: null,
   valor_total_com_frete: null,
+  retirada_loja: null,
   kit_marca_itens: null,
   kit_marca_outros: null,
   utm_source: null,
@@ -129,7 +135,7 @@ export const ESTAGIO_LABEL: Record<EstagioMarca, string> = {
 export const MODELAGENS_CAMISA = ['Oversized', 'Babylook', 'Regata', 'Infantil', 'Boxy']
 
 /** Tecidos disponíveis pra camiseta. */
-export const TECIDOS_CAMISA = ['Penteado', 'Confort/Ceramic', 'Poliamida', 'Dryfit', 'Elastano']
+export const TECIDOS_CAMISA = ['Penteado', 'Confort/Ceramic']
 
 export interface KitMarcaItem {
   chave: string
