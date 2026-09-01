@@ -7,6 +7,7 @@ import { salvarParcial } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { calcularPrecoLead, fetchTabelaPrecos } from '../lib/pricing'
 import { emptyLead, type Lead, type PrecoRow } from '../lib/types'
+import { capturarUtm } from '../lib/utm'
 import * as A from './Answers'
 import { UploadEstampa } from './UploadEstampa'
 import { useConversation } from './useConversation'
@@ -42,8 +43,22 @@ interface HistoryEntry {
   frete: FreteState
 }
 
+/** Junta o UTM capturado na URL de entrada ao lead vazio, uma vez só, no primeiro render. */
+function leadInicial(): Lead {
+  const utm = capturarUtm()
+  if (!utm) return emptyLead
+  return {
+    ...emptyLead,
+    utm_source: utm.utm_source ?? null,
+    utm_medium: utm.utm_medium ?? null,
+    utm_campaign: utm.utm_campaign ?? null,
+    utm_content: utm.utm_content ?? null,
+    utm_term: utm.utm_term ?? null,
+  }
+}
+
 export default function Quiz() {
-  const [lead, setLead] = useState<Lead>(emptyLead)
+  const [lead, setLead] = useState<Lead>(leadInicial)
   const [current, setCurrent] = useState<Current>('abertura')
   const [aguardandoUpload, setAguardandoUpload] = useState(false)
   const [precos, setPrecos] = useState<PrecoRow[]>([])
@@ -73,7 +88,15 @@ export default function Quiz() {
   const preco = useMemo(() => calcularPrecoLead(precos, lead), [precos, lead])
 
   useEffect(() => {
-    fim.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    // Em mobile, fechar o teclado (ver blurAtivo em advance/comecar) muda a
+    // altura visível da viewport no mesmo instante em que a resposta troca de
+    // tela. Rolar na hora, no meio dessas duas mudanças de layout, é o que
+    // deixava aparecer aquele vão preto grande no topo antes de estabilizar.
+    // Um frame de folga deixa o layout assentar antes de rolar.
+    const id = requestAnimationFrame(() => {
+      fim.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    })
+    return () => cancelAnimationFrame(id)
   }, [messages.length, typing, current, aguardandoUpload])
 
   /** Junta o que ja foi respondido com o que foi calculado, do jeito que vai pro banco. */
@@ -116,7 +139,18 @@ export default function Quiz() {
     setHistory((h) => [...h, { step: current, lead, msgCount: messages.length, frete }])
   }
 
+  /**
+   * Fecha o teclado do celular ANTES da tela trocar, em vez de deixar o
+   * teclado fechar sozinho ao mesmo tempo em que o layout muda de pergunta.
+   * As duas coisas juntas é o que causava aquele vão preto no topo da tela.
+   */
+  function blurAtivo() {
+    const ativo = document.activeElement
+    if (ativo instanceof HTMLElement) ativo.blur()
+  }
+
   const advance: A.Advance = (patch, userText, interstitial) => {
+    blurAtivo()
     pushHistory()
     const proximoLead = { ...lead, ...patch }
     setLead(proximoLead)
@@ -181,6 +215,7 @@ export default function Quiz() {
    */
   function voltar() {
     if (!history.length) return
+    blurAtivo()
     const entry = history[history.length - 1]
     setHistory((h) => h.slice(0, -1))
     rewindTo(entry.msgCount)
@@ -200,8 +235,9 @@ export default function Quiz() {
   function reiniciar() {
     if (current === 'abertura') return
     if (!window.confirm('Recomeçar do início? As respostas já preenchidas nessa tela vão sumir.')) return
+    blurAtivo()
     setHistory([])
-    setLead(emptyLead)
+    setLead(leadInicial())
     setFrete(FRETE_INICIAL)
     setAguardandoUpload(false)
     setCurrent('abertura')

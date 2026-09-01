@@ -20,6 +20,7 @@ O quiz não grava nada sem isso.
    - o conteúdo de `supabase/schema.sql`
    - o conteúdo de `supabase/02-frete-e-recuperacao.sql`
    - o conteúdo de `supabase/03-modelagem-tecido-kit-marca.sql`
+   - o conteúdo de `supabase/04-utm.sql`
 4. Vá em **Project Settings > API** e copie:
    - **Project URL** (fica `https://xxxxxxxx.supabase.co`)
    - a chave **anon public**

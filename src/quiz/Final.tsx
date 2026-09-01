@@ -5,6 +5,7 @@ import { formatBRL } from '../lib/format'
 import { salvarCompleto } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { KIT_MARCA_ITENS, TECNICA_LABEL, type Lead } from '../lib/types'
+import { utmParaTag } from '../lib/utm'
 import type { FreteState } from './Quiz'
 
 interface Props {
@@ -58,6 +59,19 @@ function mensagemWhats(
     kitOutros.trim() ? `Outros materiais gráficos: ${kitOutros.trim()}` : null,
     `Total: ${total ? formatBRL(total) : 'sob consulta'}`,
   ].filter((l): l is string => l !== null)
+
+  // Tag discreta de origem (utm_campaign/utm_content), só aparece quando o
+  // quiz foi aberto a partir de um link com UTM — não polui a mensagem de
+  // quem chegou direto ou por indicação.
+  const tagUtm = utmParaTag({
+    utm_source: lead.utm_source ?? undefined,
+    utm_medium: lead.utm_medium ?? undefined,
+    utm_campaign: lead.utm_campaign ?? undefined,
+    utm_content: lead.utm_content ?? undefined,
+    utm_term: lead.utm_term ?? undefined,
+  })
+  if (tagUtm) linhas.push('', `[ref: ${tagUtm}]`)
+
   return encodeURIComponent(linhas.join('\n'))
 }
 
