@@ -23,6 +23,7 @@ O quiz não grava nada sem isso.
    - o conteúdo de `supabase/04-utm.sql`
    - o conteúdo de `supabase/05-dtf-varias-aplicacoes-retirada.sql`
    - o conteúdo de `supabase/06-revenda-marca-pagamento-retomada.sql`
+   - o conteúdo de `supabase/07-taxas-parcelamento-reais.sql`
 4. Vá em **Project Settings > API** e copie:
    - **Project URL** (fica `https://xxxxxxxx.supabase.co`)
    - a chave **anon public**

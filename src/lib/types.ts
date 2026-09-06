@@ -74,12 +74,15 @@ export interface Lead {
   updated_at?: string
 }
 
+/** Chave = quantidade de parcelas ("1".."12"), valor = percentual da maquininha pra essa quantidade. */
+export type TaxasParcelamento = Record<string, number>
+
 /** Singleton editável no admin, sem precisar mexer em código quando a taxa da maquininha mudar. */
 export interface CondicoesPagamento {
   id: number
   parcelamento_max: number
-  /** null = a Kodara ainda não confirmou esse número. Não inventar, mostrar sem percentual até preencher. */
-  taxa_maquininha_pct: number | null
+  /** null/vazio = a Kodara ainda não confirmou esses números. Não inventar, mostrar sem percentual até preencher. */
+  taxas_parcelamento: TaxasParcelamento | null
   desconto_avista_pct: number
   entrada_pct: number
 }
@@ -87,7 +90,7 @@ export interface CondicoesPagamento {
 export const CONDICOES_PAGAMENTO_PADRAO: CondicoesPagamento = {
   id: 1,
   parcelamento_max: 12,
-  taxa_maquininha_pct: null,
+  taxas_parcelamento: null,
   desconto_avista_pct: 3,
   entrada_pct: 50,
 }

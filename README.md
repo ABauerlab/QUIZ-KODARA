@@ -131,6 +131,11 @@ No painel do Supabase, abra o **SQL Editor** e rode **dois arquivos, nessa ordem
   linha daquela sessão, nunca de outra)
 - atualiza `salvar_lead` pra gravar os campos novos
 
+**`supabase/07-taxas-parcelamento-reais.sql`** (taxa da maquininha por parcela) substitui o campo
+`taxa_maquininha_pct` (percentual único) por `taxas_parcelamento` (jsonb, uma taxa por quantidade de
+parcelas de 1x a 12x — a taxa da Kodara varia bastante por parcela, de ~4% em 1x a ~17% em 12x) e já
+grava os valores reais informados pela Kodara como padrão. Editável em Preços, campo por campo.
+
 Os seis são idempotentes, rodar de novo não quebra nada.
 
 ### 2. O que o RLS garante

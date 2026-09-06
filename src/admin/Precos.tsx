@@ -20,13 +20,22 @@ function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
       })
   }, [supabase])
 
+  function setTaxaParcela(n: number, valor: string) {
+    setCond((c) => {
+      const taxas = { ...(c.taxas_parcelamento ?? {}) }
+      if (valor.trim()) taxas[String(n)] = Number(valor.replace(',', '.')) || 0
+      else delete taxas[String(n)]
+      return { ...c, taxas_parcelamento: Object.keys(taxas).length ? taxas : null }
+    })
+  }
+
   async function salvar() {
     setMsg('')
     const { error } = await supabase
       .from('condicoes_pagamento')
       .update({
         parcelamento_max: cond.parcelamento_max,
-        taxa_maquininha_pct: cond.taxa_maquininha_pct,
+        taxas_parcelamento: cond.taxas_parcelamento,
         desconto_avista_pct: cond.desconto_avista_pct,
         entrada_pct: cond.entrada_pct,
       })
@@ -36,12 +45,14 @@ function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
 
   if (carregando) return null
 
+  const parcelas = Array.from({ length: 12 }, (_, i) => i + 1)
+
   return (
     <div className="rounded-2xl border border-line bg-panel p-3">
       <p className="font-semibold">Condições de pagamento</p>
       <p className="mt-1 text-xs text-mute">
-        Aparecem na tela final do quiz e na mensagem de WhatsApp. Deixe a taxa da maquininha vazia
-        enquanto não tiver o valor exato — o quiz avisa que a taxa é repassada sem chutar percentual.
+        Aparecem na tela final do quiz e na mensagem de WhatsApp. A taxa da maquininha varia por
+        parcela — deixe em branco a que não tiver confirmada ainda, o quiz não chuta percentual.
       </p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <label className="grid gap-1 text-xs text-mute">
@@ -51,21 +62,6 @@ function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
             inputMode="numeric"
             value={cond.parcelamento_max}
             onChange={(e) => setCond({ ...cond, parcelamento_max: Number(e.target.value) || 0 })}
-          />
-        </label>
-        <label className="grid gap-1 text-xs text-mute">
-          Taxa maquininha (%)
-          <input
-            className="field py-2"
-            inputMode="decimal"
-            placeholder="a confirmar"
-            value={cond.taxa_maquininha_pct ?? ''}
-            onChange={(e) =>
-              setCond({
-                ...cond,
-                taxa_maquininha_pct: e.target.value.trim() ? Number(e.target.value.replace(',', '.')) : null,
-              })
-            }
           />
         </label>
         <label className="grid gap-1 text-xs text-mute">
@@ -86,6 +82,21 @@ function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
             onChange={(e) => setCond({ ...cond, entrada_pct: Number(e.target.value.replace(',', '.')) || 0 })}
           />
         </label>
+      </div>
+      <p className="mt-3 text-xs text-mute">Taxa da maquininha por parcela (%)</p>
+      <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {parcelas.map((n) => (
+          <label key={n} className="grid gap-1 text-xs text-mute">
+            {n}x
+            <input
+              className="field py-2"
+              inputMode="decimal"
+              placeholder="—"
+              value={cond.taxas_parcelamento?.[String(n)] ?? ''}
+              onChange={(e) => setTaxaParcela(n, e.target.value)}
+            />
+          </label>
+        ))}
       </div>
       <button className="btn mt-3" onClick={() => void salvar()}>
         Salvar condições
