@@ -1,7 +1,99 @@
 import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { env } from '../lib/env'
-import type { PrecoRow } from '../lib/types'
+import { CONDICOES_PAGAMENTO_PADRAO, type CondicoesPagamento, type PrecoRow } from '../lib/types'
+
+function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
+  const [cond, setCond] = useState<CondicoesPagamento>(CONDICOES_PAGAMENTO_PADRAO)
+  const [carregando, setCarregando] = useState(true)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    supabase
+      .from('condicoes_pagamento')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setCond(data as CondicoesPagamento)
+        setCarregando(false)
+      })
+  }, [supabase])
+
+  async function salvar() {
+    setMsg('')
+    const { error } = await supabase
+      .from('condicoes_pagamento')
+      .update({
+        parcelamento_max: cond.parcelamento_max,
+        taxa_maquininha_pct: cond.taxa_maquininha_pct,
+        desconto_avista_pct: cond.desconto_avista_pct,
+        entrada_pct: cond.entrada_pct,
+      })
+      .eq('id', 1)
+    setMsg(error ? `Erro ao salvar: ${error.message}` : 'Condições de pagamento salvas.')
+  }
+
+  if (carregando) return null
+
+  return (
+    <div className="rounded-2xl border border-line bg-panel p-3">
+      <p className="font-semibold">Condições de pagamento</p>
+      <p className="mt-1 text-xs text-mute">
+        Aparecem na tela final do quiz e na mensagem de WhatsApp. Deixe a taxa da maquininha vazia
+        enquanto não tiver o valor exato — o quiz avisa que a taxa é repassada sem chutar percentual.
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <label className="grid gap-1 text-xs text-mute">
+          Parcelamento máx.
+          <input
+            className="field py-2"
+            inputMode="numeric"
+            value={cond.parcelamento_max}
+            onChange={(e) => setCond({ ...cond, parcelamento_max: Number(e.target.value) || 0 })}
+          />
+        </label>
+        <label className="grid gap-1 text-xs text-mute">
+          Taxa maquininha (%)
+          <input
+            className="field py-2"
+            inputMode="decimal"
+            placeholder="a confirmar"
+            value={cond.taxa_maquininha_pct ?? ''}
+            onChange={(e) =>
+              setCond({
+                ...cond,
+                taxa_maquininha_pct: e.target.value.trim() ? Number(e.target.value.replace(',', '.')) : null,
+              })
+            }
+          />
+        </label>
+        <label className="grid gap-1 text-xs text-mute">
+          Desconto à vista (%)
+          <input
+            className="field py-2"
+            inputMode="decimal"
+            value={cond.desconto_avista_pct}
+            onChange={(e) => setCond({ ...cond, desconto_avista_pct: Number(e.target.value.replace(',', '.')) || 0 })}
+          />
+        </label>
+        <label className="grid gap-1 text-xs text-mute">
+          Entrada (%)
+          <input
+            className="field py-2"
+            inputMode="decimal"
+            value={cond.entrada_pct}
+            onChange={(e) => setCond({ ...cond, entrada_pct: Number(e.target.value.replace(',', '.')) || 0 })}
+          />
+        </label>
+      </div>
+      <button className="btn mt-3" onClick={() => void salvar()}>
+        Salvar condições
+      </button>
+      {msg && <p className="mt-2 text-xs text-brand">{msg}</p>}
+    </div>
+  )
+}
 
 type Draft = Omit<PrecoRow, 'id'> & { id?: string }
 
@@ -96,6 +188,8 @@ export default function Precos({ supabase }: { supabase: SupabaseClient }) {
 
   return (
     <div className="grid gap-4">
+      <CondicoesPagamentoCard supabase={supabase} />
+
       <div className="rounded-2xl border border-line bg-panel p-3 text-sm">
         <p className="font-semibold">Chave PIX</p>
         <p className="mt-1 break-all font-mono text-xs text-mute">{env.pixKey || 'não configurada'}</p>

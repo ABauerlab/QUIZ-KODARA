@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { dtfTexto, formatBRL, formatDate, phoneDigits } from '../lib/format'
-import { BUCKET_ESTAMPAS } from '../quiz/UploadEstampa'
 import { ETAPA_LABEL } from '../quiz/steps'
 import {
   ESTAGIO_LABEL,
+  FINALIDADE_LABEL,
   KIT_MARCA_ITENS,
   STATUS_LABEL,
   TECNICA_LABEL,
   type Lead,
   type LeadStatus,
 } from '../lib/types'
+
+/** O quiz não sobe mais arquivo (removido — o cliente manda a arte pelo WhatsApp), mas leads antigos ainda têm arquivo salvo aqui. */
+const BUCKET_ESTAMPAS = 'estampas'
 
 export const MSG_RECONTATO =
   'Fala, vi que você começou a montar seu pedido de private label aqui com a gente e não terminou. Ficou alguma dúvida? Bora finalizar juntos.'
@@ -56,15 +59,20 @@ function Detalhe({
     window.open(data.signedUrl, '_blank', 'noopener')
   }
 
-  const grade = lead.grade_tamanhos
-    ? Object.entries(lead.grade_tamanhos)
-        .map(([t, q]) => `${t}: ${q}`)
-        .join(' | ')
-    : null
+  const grade = lead.grade_indefinida
+    ? 'A definir com a Kodara'
+    : lead.grade_tamanhos
+      ? Object.entries(lead.grade_tamanhos)
+          .map(([t, q]) => `${t}: ${q}`)
+          .join(' | ')
+      : null
 
   return (
     <div className="mt-3 rounded-xl border border-line bg-ink p-3">
       <Campo label="Estágio" value={lead.estagio_marca ? ESTAGIO_LABEL[lead.estagio_marca] : null} />
+      <Campo label="Finalidade" value={lead.finalidade_peca ? FINALIDADE_LABEL[lead.finalidade_peca] : null} />
+      <Campo label="Nome da marca" value={lead.nome_marca_cliente} />
+      <Campo label="Instagram da marca" value={lead.instagram_marca_cliente} />
       <Campo label="Peça" value={lead.tipo_peca} />
       <Campo label="Quantidade" value={lead.quantidade} />
       <Campo
@@ -86,7 +94,13 @@ function Detalhe({
       />
       <Campo
         label="Tamanho da estampa (DTF)"
-        value={lead.tecnica_estampa === 'dtf' ? dtfTexto(lead) : null}
+        value={
+          lead.tecnica_estampa === 'dtf'
+            ? lead.estampa_medida_indefinida
+              ? 'A definir com a Kodara'
+              : dtfTexto(lead)
+            : null
+        }
       />
       <Campo
         label="Kit Marca"

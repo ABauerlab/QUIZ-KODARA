@@ -1,7 +1,45 @@
 import { useEffect, useRef, useState } from 'react'
 import { env } from '../lib/env'
 import type { Msg } from '../quiz/useConversation'
+import { BotaoDuvida } from './Faq'
 import { Wordmark } from './Logo'
+
+/** Reconhece @vistakodara, o domínio do site e o WhatsApp mencionados em texto solto e vira link clicável. */
+const PADRAO_LINK = /(@vistakodara\b)|(vistakodara\.com\.br)/gi
+
+function linkify(text: string) {
+  const partes = text.split(PADRAO_LINK)
+  return partes.map((parte, i) => {
+    if (!parte) return null
+    if (/^@vistakodara$/i.test(parte)) {
+      return (
+        <a
+          key={i}
+          href="https://instagram.com/vistakodara"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          {parte}
+        </a>
+      )
+    }
+    if (/^vistakodara\.com\.br$/i.test(parte)) {
+      return (
+        <a
+          key={i}
+          href="https://vistakodara.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          {parte}
+        </a>
+      )
+    }
+    return parte
+  })
+}
 
 export function Bubble({ side, text }: { side: Msg['side']; text: string }) {
   const bot = side === 'bot'
@@ -15,7 +53,7 @@ export function Bubble({ side, text }: { side: Msg['side']; text: string }) {
             : 'rounded-br-md bg-brand font-medium text-ink')
         }
       >
-        {text}
+        {linkify(text)}
       </div>
     </div>
   )
@@ -106,6 +144,7 @@ export function Header({
             <span className="text-mute">· responde rápido</span>
           </p>
         </div>
+        <BotaoDuvida />
         {(podeReiniciar || onWhatsapp) && (
           <div className="relative shrink-0" ref={menuRef}>
             <button

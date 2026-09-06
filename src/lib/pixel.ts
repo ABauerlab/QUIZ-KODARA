@@ -66,4 +66,19 @@ export const pixel = {
   whatsappRedirect(value: number | null | undefined, identidade?: Identidade, extra?: EventPayload) {
     disparar('trackCustom', 'WhatsAppRedirect', { value, extra, identidade })
   },
+  /**
+   * Um evento por pergunta respondida, só no navegador (sem CAPI): serve pra
+   * montar o funil de abandono etapa a etapa no Gerenciador de Eventos, não
+   * precisa da confiabilidade server-side que Lead/Purchase precisam, e
+   * evitar bater o capi-evento umas 15 vezes por sessão só pra isso.
+   */
+  quizStepCompleted(etapa: string) {
+    const fbq = window.fbq
+    if (!fbq) return
+    try {
+      fbq('trackCustom', 'QuizStepCompleted', { content_name: etapa })
+    } catch {
+      // Pixel nunca pode quebrar o funil.
+    }
+  },
 }

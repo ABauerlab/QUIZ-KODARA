@@ -4,6 +4,25 @@ export function formatBRL(value: number) {
   return brl.format(value)
 }
 
+interface CondicoesPagamentoTexto {
+  parcelamento_max: number
+  taxa_maquininha_pct: number | null
+  desconto_avista_pct: number
+}
+
+/**
+ * Texto único das condições de pagamento, usado na tela final e na mensagem
+ * de WhatsApp. Sem a taxa da maquininha configurada, não inventa percentual —
+ * só avisa que ela é repassada e fica pra confirmar.
+ */
+export function textoCondicoesPagamento(c: CondicoesPagamentoTexto): string {
+  const parcelamento =
+    c.taxa_maquininha_pct !== null
+      ? `Parcelamento em até ${c.parcelamento_max}x no cartão (taxa da maquininha de ${c.taxa_maquininha_pct}% repassada)`
+      : `Parcelamento em até ${c.parcelamento_max}x no cartão (taxa da maquininha repassada, confirmamos o valor exato no WhatsApp)`
+  return `${parcelamento}, ou ${c.desconto_avista_pct}% de desconto no Pix à vista. Condições padrão, sujeitas a confirmação no WhatsApp.`
+}
+
 /** Mascara de telefone BR: (31) 99999-9999 e (31) 9999-9999. */
 export function maskPhone(raw: string) {
   const d = raw.replace(/\D/g, '').slice(0, 11)
