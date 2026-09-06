@@ -32,10 +32,22 @@ export function getSessionId(): string {
   }
 }
 
+/** Existe sessão salva antes desse mount? Diferencia visita nova de refresh no meio do quiz. */
+export function temSessaoExistente(): boolean {
+  try {
+    return Boolean(sessionStorage.getItem(CHAVE_SESSAO))
+  } catch {
+    return false
+  }
+}
+
 /** Só os campos que a função do banco aceita. */
 function payload(lead: Lead, etapa: string) {
   return {
     estagio_marca: lead.estagio_marca,
+    finalidade_peca: lead.finalidade_peca,
+    nome_marca_cliente: lead.nome_marca_cliente,
+    instagram_marca_cliente: lead.instagram_marca_cliente,
     tipo_peca: lead.tipo_peca,
     quantidade: lead.quantidade,
     tecnica_estampa: lead.tecnica_estampa,
@@ -48,8 +60,10 @@ function payload(lead: Lead, etapa: string) {
     estampa_altura_cm: lead.estampa_altura_cm,
     aplicacoes: lead.aplicacoes,
     aplicacoes_detalhe: lead.aplicacoes_detalhe,
+    estampa_medida_indefinida: lead.estampa_medida_indefinida,
     cores: lead.cores,
     grade_tamanhos: lead.grade_tamanhos,
+    grade_indefinida: lead.grade_indefinida,
     tem_arte: lead.tem_arte,
     arquivo_estampa_url: lead.arquivo_estampa_url,
     posicao_tamanho_estampa: lead.posicao_tamanho_estampa,
@@ -122,4 +136,31 @@ export async function salvarCompleto(lead: Lead) {
   pendente = null
   if (emVoo) await emVoo.catch(() => {})
   await executar(lead, 'final', 'completo')
+}
+
+export interface LeadSalvo {
+  lead: Partial<Lead>
+  etapa_atual: string | null
+  status: 'incompleto' | 'completo' | 'contatado'
+}
+
+/**
+ * Busca de volta o que já foi salvo pra essa sessão (session_id no
+ * sessionStorage), pra retomar de onde parou depois de um refresh no meio
+ * do quiz. Só vale a pena chamar se `temSessaoExistente()` já for true —
+ * numa visita nova não existe nada pra buscar.
+ */
+export async function buscarLeadSalvo(): Promise<LeadSalvo | null> {
+  if (!supabaseConfigured) return null
+  try {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .rpc('buscar_lead_por_sessao', { p_session_id: getSessionId() })
+      .maybeSingle()
+    if (error || !data) return null
+    const { etapa_atual, status, ...lead } = data as Lead & { status: LeadSalvo['status'] }
+    return { lead, etapa_atual: etapa_atual ?? null, status }
+  } catch {
+    return null
+  }
 }

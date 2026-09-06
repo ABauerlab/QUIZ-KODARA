@@ -3,18 +3,17 @@ import { Bubble, Header, Progress, Typing } from '../components/Chat'
 import { Splash } from '../components/Splash'
 import { env } from '../lib/env'
 import { calcularFrete } from '../lib/frete'
-import { salvarParcial } from '../lib/leadStore'
+import { buscarLeadSalvo, salvarParcial, temSessaoExistente } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { calcularPrecoLead, fetchTabelaPrecos } from '../lib/pricing'
 import { emptyLead, type Lead, type PrecoRow } from '../lib/types'
 import { capturarUtm } from '../lib/utm'
 import * as A from './Answers'
-import { UploadEstampa } from './UploadEstampa'
 import { useConversation } from './useConversation'
 import {
+  MSG_ARTE_PRONTA,
   MSG_MARCA_NOVA,
   MSG_SEM_ARTE,
-  MSG_UPLOAD,
   STEPS,
   aberturaMensagens,
   nextStep,
@@ -60,7 +59,6 @@ function leadInicial(): Lead {
 export default function Quiz() {
   const [lead, setLead] = useState<Lead>(leadInicial)
   const [current, setCurrent] = useState<Current>('abertura')
-  const [aguardandoUpload, setAguardandoUpload] = useState(false)
   const [precos, setPrecos] = useState<PrecoRow[]>([])
   const [frete, setFrete] = useState<FreteState>(FRETE_INICIAL)
   const [splash, setSplash] = useState(true)
@@ -73,7 +71,29 @@ export default function Quiz() {
   useEffect(() => {
     if (abriu.current) return
     abriu.current = true
-    pushBot(aberturaMensagens())
+
+    // Só vale a pena buscar progresso salvo se já existia sessão ANTES desse
+    // mount — numa visita nova não existe nada pra restaurar, e poupa uma
+    // ida ao banco à toa pra quem tá chegando agora (o caso mais comum).
+    if (!temSessaoExistente()) {
+      pushBot(aberturaMensagens())
+      return
+    }
+
+    void buscarLeadSalvo().then((salvo) => {
+      const etapaValida = salvo && STEPS.some((s) => s.id === salvo.etapa_atual)
+      if (!salvo || !etapaValida) {
+        pushBot(aberturaMensagens())
+        return
+      }
+      const alvo = salvo.etapa_atual as Current
+      setLead((l) => ({ ...l, ...salvo.lead }))
+      setCurrent(alvo)
+      if (alvo !== 'final') {
+        const def = STEPS.find((s) => s.id === alvo)
+        pushBot(['Boa, vamos continuar de onde você parou.', ...(def?.prompts ?? [])])
+      }
+    })
   }, [pushBot])
 
   // Busca a tabela de precos assim que a peca e a quantidade existem, pra que o
@@ -97,7 +117,7 @@ export default function Quiz() {
       fim.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
     })
     return () => cancelAnimationFrame(id)
-  }, [messages.length, typing, current, aguardandoUpload])
+  }, [messages.length, typing, current])
 
   /** Junta o que ja foi respondido com o que foi calculado, do jeito que vai pro banco. */
   function comValores(base: Lead, freteAtual: FreteState = frete): Lead {
@@ -155,6 +175,9 @@ export default function Quiz() {
     const proximoLead = { ...lead, ...patch }
     setLead(proximoLead)
     pushUser(userText)
+    // Um evento por pergunta respondida, pra montar o funil de abandono
+    // etapa a etapa no Gerenciador de Eventos (current !== 'abertura' aqui sempre).
+    pixel.quizStepCompleted(current)
 
     if (current === 'p11') {
       pixel.lead(
@@ -190,22 +213,11 @@ export default function Quiz() {
 
   function responderP8(temArte: boolean) {
     if (temArte) {
-      // Não passa por advance: é um sub-estado da própria P8, não avança pergunta.
-      pushHistory()
-      setLead((l) => ({ ...l, tem_arte: true }))
-      pushUser('Sim, já tenho o arquivo')
-      pushBot([MSG_UPLOAD])
-      setAguardandoUpload(true)
+      // O quiz não sobe arquivo: o cliente manda a arte direto no WhatsApp depois.
+      advance({ tem_arte: true }, 'Sim, já tenho o arquivo', [MSG_ARTE_PRONTA])
       return
     }
-    advance({ tem_arte: false, arquivo_estampa_url: null }, 'Não, preciso de ajuda pra criar', [
-      MSG_SEM_ARTE,
-    ])
-  }
-
-  function uploadPronto(path: string | null, nomeArquivo?: string) {
-    setAguardandoUpload(false)
-    advance({ tem_arte: true, arquivo_estampa_url: path }, path ? `Enviei: ${nomeArquivo}` : 'Mando depois')
+    advance({ tem_arte: false }, 'Não, preciso de ajuda pra criar', [MSG_SEM_ARTE])
   }
 
   /**
@@ -222,7 +234,6 @@ export default function Quiz() {
     setLead(entry.lead)
     setCurrent(entry.step)
     setFrete(entry.frete)
-    setAguardandoUpload(false)
     salvarParcial(comValores(entry.lead, entry.frete), entry.step)
   }
 
@@ -239,7 +250,6 @@ export default function Quiz() {
     setHistory([])
     setLead(leadInicial())
     setFrete(FRETE_INICIAL)
-    setAguardandoUpload(false)
     setCurrent('abertura')
     rewindTo(0)
     pushBot(aberturaMensagens())
@@ -315,6 +325,9 @@ export default function Quiz() {
                   </button>
                 </div>
               )}
+              {current === 'p1a' && <A.P1A lead={lead} advance={advance} />}
+              {current === 'p1b' && <A.P1B lead={lead} advance={advance} />}
+              {current === 'p1c' && <A.P1C lead={lead} advance={advance} />}
               {current === 'p2' && <A.P2 lead={lead} advance={advance} />}
               {current === 'p2m' && <A.P2M lead={lead} advance={advance} />}
               {current === 'p2t' && <A.P2T lead={lead} advance={advance} />}
@@ -322,22 +335,16 @@ export default function Quiz() {
               {current === 'p4' && <A.P4 lead={lead} advance={advance} />}
               {current === 'p6' && <A.P6 lead={lead} advance={advance} />}
               {current === 'p7' && <A.P7 lead={lead} advance={advance} />}
-              {current === 'p8' &&
-                (aguardandoUpload ? (
-                  <UploadEstampa
-                    onDone={(path, nome) => uploadPronto(path, nome)}
-                    onSkip={() => uploadPronto(null)}
-                  />
-                ) : (
-                  <div className="grid gap-2">
-                    <button className="btn" onClick={() => responderP8(true)}>
-                      Sim, já tenho o arquivo
-                    </button>
-                    <button className="btn" onClick={() => responderP8(false)}>
-                      Não, preciso de ajuda pra criar
-                    </button>
-                  </div>
-                ))}
+              {current === 'p8' && (
+                <div className="grid gap-2">
+                  <button className="btn" onClick={() => responderP8(true)}>
+                    Sim, já tenho o arquivo
+                  </button>
+                  <button className="btn" onClick={() => responderP8(false)}>
+                    Não, preciso de ajuda pra criar
+                  </button>
+                </div>
+              )}
               {current === 'p9' && <A.P9 lead={lead} advance={advance} />}
               {current === 'p9d' && <A.P9D lead={lead} advance={advance} />}
               {current === 'p10' && <A.P10 lead={lead} advance={advance} />}

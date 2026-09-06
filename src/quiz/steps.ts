@@ -3,6 +3,9 @@ import type { Lead } from '../lib/types'
 
 export type StepId =
   | 'p1'
+  | 'p1a'
+  | 'p1b'
+  | 'p1c'
   | 'p2'
   | 'p2m'
   | 'p2t'
@@ -30,6 +33,17 @@ export const STEPS: StepDef[] = [
   {
     id: 'p1',
     prompts: ['Você já tem uma marca rodando ou tá começando agora?'],
+    counts: true,
+  },
+  {
+    id: 'p1a',
+    prompts: ['Essa produção é pra revender (vender pronta pros seus clientes) ou pra uso próprio/outro fim?'],
+    counts: true,
+  },
+  { id: 'p1b', prompts: ['Qual o nome da sua marca?'], counts: true },
+  {
+    id: 'p1c',
+    prompts: ['Qual o Instagram da sua marca? Se ainda não tiver, pode responder que ainda não tem.'],
     counts: true,
   },
   { id: 'p2', prompts: ['Que peça você quer produzir?'], counts: true },
@@ -141,6 +155,9 @@ export const MSG_ETIQUETA =
 /** Rótulo curto de cada etapa, pro painel dizer onde a pessoa parou. */
 export const ETAPA_LABEL: Record<string, string> = {
   p1: 'Estágio da marca',
+  p1a: 'Finalidade',
+  p1b: 'Nome da marca',
+  p1c: 'Instagram da marca',
   p2: 'Tipo de peça',
   p2m: 'Modelagem',
   p2t: 'Tecido',
@@ -157,7 +174,13 @@ export const ETAPA_LABEL: Record<string, string> = {
   final: 'Chegou no resumo',
 }
 
-export const MSG_UPLOAD = 'Manda o arquivo aqui que a gente já guarda junto com seu pedido.'
+export const MSG_ARTE_PRONTA =
+  'Show, é só me mandar o arquivo da arte aqui no WhatsApp quando a gente conversar, não precisa subir nada agora.'
 
 export const MSG_SEM_ARTE =
   'Sem problema, a Kodara também ajuda a criar a estampa do zero. A gente já fez isso com várias marcas.'
+
+export const MSG_MOCKUP =
+  'Antes de fechar a produção, a gente te manda um mockup pelo WhatsApp: uma visualização de como a estampa fica aplicada na peça, na cor e modelagem escolhidas. Só depois de você aprovar é que a produção começa.'
+
+export const MSG_GRADE_INDEFINIDA = 'Sem problema, a gente ajusta isso junto com você no WhatsApp.'

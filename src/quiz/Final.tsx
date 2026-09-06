@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Wordmark } from '../components/Logo'
 import { env } from '../lib/env'
-import { dtfTexto, formatBRL } from '../lib/format'
+import { formatBRL, textoCondicoesPagamento } from '../lib/format'
 import { salvarCompleto } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
-import { KIT_MARCA_ITENS, TECNICA_LABEL, type Lead } from '../lib/types'
+import { fetchCondicoesPagamento } from '../lib/pricing'
+import { CONDICOES_PAGAMENTO_PADRAO, KIT_MARCA_ITENS, type CondicoesPagamento, type Lead } from '../lib/types'
 import { utmParaTag } from '../lib/utm'
 import type { FreteState } from './Quiz'
+import { resumoLead } from './resumo'
 
 interface Props {
   lead: Lead
@@ -26,13 +28,20 @@ function Linha({ label, value }: { label: string; value: string }) {
   )
 }
 
-function gradeTexto(lead: Lead) {
-  if (!lead.grade_tamanhos) return null
-  const e = Object.entries(lead.grade_tamanhos)
-  if (!e.length) return null
-  return e.map(([t, q]) => `${t}: ${q}`).join(' | ')
+function precoKitMarcaItem(chave: string, quantidadePecas: number | null): number {
+  const item = KIT_MARCA_ITENS.find((i) => i.chave === chave)
+  if (!item) return 0
+  if (item.preco !== null) return item.preco
+  // Ziplock: R$2 por unidade, uma pra cada peça do pedido.
+  return 2 * (quantidadePecas ?? 0)
 }
 
+/**
+ * Monta a mensagem de WhatsApp a partir da MESMA lista de campos (resumoLead)
+ * que preenche o card "Fechando aqui", pra nunca mais desatualizar quando uma
+ * pergunta nova entrar no quiz — junto com os valores e condições, que têm
+ * formatação própria (número grande, aproximado) e por isso ficam à parte.
+ */
 function mensagemWhats(
   lead: Lead,
   pecas: number | null,
@@ -41,24 +50,27 @@ function mensagemWhats(
   kitItens: string[],
   kitOutros: string,
   retiradaLoja: boolean,
+  condicoes: CondicoesPagamento,
 ) {
+  const respostas = resumoLead(lead)
+    .filter((c) => c.value !== null && c.label !== 'Entrega') // Entrega já vira "Frete"/CEP abaixo, pra não duplicar.
+    .map((c) => `${c.label}: ${c.value}`)
+
   const linhas = [
     'Fala Kodara! Acabei de fechar meu briefing no quiz de Private Label.',
     '',
-    `Nome: ${lead.nome ?? ''}`,
-    `Peça: ${lead.tipo_peca ?? ''}`,
-    lead.modelagem ? `Modelagem: ${lead.modelagem}` : null,
-    lead.tecido ? `Tecido: ${lead.tecido}` : null,
-    `Quantidade: ${lead.quantidade ?? ''}`,
-    `Técnica: ${lead.tecnica_estampa ? TECNICA_LABEL[lead.tecnica_estampa] : ''}`,
+    ...respostas,
     retiradaLoja ? 'Entrega: retirada na loja (Praça Sete, BH)' : `CEP: ${lead.cep_destino ?? ''}`,
-    `Peças: ${pecas ? formatBRL(pecas) : 'sob consulta'}`,
-    `Frete: ${retiradaLoja ? 'grátis, retirada na loja' : valorFrete ? formatBRL(valorFrete) : 'a calcular'}`,
+    '',
+    `Peças: ${pecas ? `a partir de ${formatBRL(pecas)} (aproximado)` : 'sob consulta'}`,
+    `Frete: ${retiradaLoja ? 'grátis, retirada na loja' : valorFrete ? `${formatBRL(valorFrete)} (estimado)` : 'a calcular'}`,
     kitItens.length
       ? `Kit Marca: ${kitItens.map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c).join(', ')}`
       : null,
     kitOutros.trim() ? `Outros materiais gráficos: ${kitOutros.trim()}` : null,
-    `Total: ${total ? formatBRL(total) : 'sob consulta'}`,
+    `Total aproximado: ${total ? `${formatBRL(total)}, sujeito a confirmação` : 'sob consulta'}`,
+    '',
+    textoCondicoesPagamento(condicoes),
   ].filter((l): l is string => l !== null)
 
   // Tag discreta de origem (utm_campaign/utm_content), só aparece quando o
@@ -76,14 +88,6 @@ function mensagemWhats(
   return encodeURIComponent(linhas.join('\n'))
 }
 
-function precoKitMarcaItem(chave: string, quantidadePecas: number | null): number {
-  const item = KIT_MARCA_ITENS.find((i) => i.chave === chave)
-  if (!item) return 0
-  if (item.preco !== null) return item.preco
-  // Ziplock: R$2 por unidade, uma pra cada peça do pedido.
-  return 2 * (quantidadePecas ?? 0)
-}
-
 export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   const [salvo, setSalvo] = useState(false)
   const [erroSalvar, setErroSalvar] = useState(false)
@@ -92,7 +96,14 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
   const [kitItens, setKitItens] = useState<string[]>([])
   const [kitOutros, setKitOutros] = useState('')
   const [retiradaLoja, setRetiradaLoja] = useState(false)
+  const [condicoes, setCondicoes] = useState<CondicoesPagamento>(CONDICOES_PAGAMENTO_PADRAO)
   const tentativa = useRef(0)
+
+  useEffect(() => {
+    fetchCondicoesPagamento()
+      .then(setCondicoes)
+      .catch(() => setCondicoes(CONDICOES_PAGAMENTO_PADRAO))
+  }, [])
 
   // Quem retira na loja não paga frete nenhum, mesmo que uma cotação já tenha voltado.
   const valorFrete = retiradaLoja ? 0 : frete.status === 'ok' ? frete.valor : null
@@ -171,9 +182,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
     }
   }
 
-  const grade = gradeTexto(lead)
-  const dtfResumo = dtfTexto(lead)
-  const entrada = total ? total / 2 : null
+  const entrada = total ? (total * condicoes.entrada_pct) / 100 : null
 
   function irProWhats() {
     pixel.whatsappRedirect(
@@ -181,7 +190,7 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
       { nome: lead.nome, whatsapp: lead.whatsapp },
       { content_name: lead.tipo_peca ?? 'private_label' },
     )
-    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total, kitItens, kitOutros, retiradaLoja)}`
+    window.location.href = `https://wa.me/${env.whatsapp}?text=${mensagemWhats(lead, valor, valorFrete, total, kitItens, kitOutros, retiradaLoja, condicoes)}`
   }
 
   return (
@@ -192,27 +201,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
           Confere se tá tudo certo. O que precisar ajustar a gente acerta no WhatsApp.
         </p>
         <div>
-          {lead.tipo_peca && <Linha label="Peça" value={lead.tipo_peca} />}
-          {lead.modelagem && <Linha label="Modelagem" value={lead.modelagem} />}
-          {lead.tecido && <Linha label="Tecido" value={lead.tecido} />}
-          {lead.quantidade && <Linha label="Quantidade" value={`${lead.quantidade} peças`} />}
-          {lead.tecnica_estampa && (
-            <Linha label="Técnica" value={TECNICA_LABEL[lead.tecnica_estampa]} />
-          )}
-          {lead.cores && <Linha label="Cor da peça" value={lead.cores} />}
-          {grade && <Linha label="Grade" value={grade} />}
-          {lead.posicao_tamanho_estampa && (
-            <Linha label="Estampa" value={lead.posicao_tamanho_estampa} />
-          )}
-          {lead.tecnica_estampa === 'silk' && lead.cores_estampa && (
-            <Linha label="Cores da estampa" value={`${lead.cores_estampa}`} />
-          )}
-          {lead.tecnica_estampa === 'dtf' && dtfResumo && (
-            <Linha label="Tamanho da estampa" value={dtfResumo} />
-          )}
-          <Linha label="Arte" value={lead.tem_arte ? 'Já tem arquivo' : 'Kodara cria a estampa'} />
-          {lead.prazo_desejado && <Linha label="Prazo" value={lead.prazo_desejado} />}
-          {lead.cep_destino && <Linha label="Entrega no CEP" value={lead.cep_destino} />}
+          {resumoLead(lead)
+            .filter((c) => c.value !== null)
+            .map((c) => (
+              <Linha key={c.label} label={c.label} value={c.value!} />
+            ))}
         </div>
       </div>
 
@@ -220,11 +213,11 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         {valor ? (
           <>
             <div className="flex justify-between gap-4 text-sm">
-              <span className="text-mute">Peças</span>
+              <span className="text-mute">Peças (aproximado)</span>
               <span className="font-medium">{formatBRL(valor)}</span>
             </div>
             <div className="mt-2 flex justify-between gap-4 text-sm">
-              <span className="text-mute">Frete</span>
+              <span className="text-mute">Frete estimado</span>
               <span className="font-medium">
                 {retiradaLoja
                   ? 'Grátis (retirada na loja)'
@@ -255,11 +248,12 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
               </div>
             )}
             <div className="mt-3 border-t border-white/10 pt-3">
-              <p className="text-sm text-mute">Total estimado</p>
+              <p className="text-sm text-mute">Total aproximado</p>
               <p className="text-3xl font-black text-brand">{total ? formatBRL(total) : '...'}</p>
               {precoUnitario && (
-                <p className="mt-1 text-xs text-mute">{formatBRL(precoUnitario)} por peça</p>
+                <p className="mt-1 text-xs text-mute">{formatBRL(precoUnitario)} por peça (aproximado)</p>
               )}
+              <p className="mt-1 text-xs text-mute">Sujeito a confirmação no WhatsApp.</p>
             </div>
           </>
         ) : (
@@ -283,8 +277,14 @@ export default function Final({ lead, valor, precoUnitario, frete }: Props) {
         )}
 
         <p className="mt-3 text-sm">
-          Pra dar início na produção, é 50% agora via PIX{entrada ? ` (${formatBRL(entrada)})` : ''} e o
-          restante antes do envio.
+          Pra dar início na produção, é {condicoes.entrada_pct}% no fechamento
+          {entrada ? ` (${formatBRL(entrada)}, aproximado)` : ''} e o restante antes do envio.
+        </p>
+        <p className="mt-2 text-xs text-mute">{textoCondicoesPagamento(condicoes)}</p>
+        <p className="mt-3 rounded-xl border border-line bg-ink/40 p-3 text-xs text-mute">
+          Antes de fechar a produção, a gente te manda um mockup pelo WhatsApp — a visualização de
+          como a estampa fica na peça, na cor e modelagem escolhidas. A produção só começa depois de
+          você aprovar.
         </p>
       </div>
 

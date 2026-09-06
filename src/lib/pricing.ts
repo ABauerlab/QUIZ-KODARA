@@ -1,7 +1,7 @@
 import { normalizePeca } from './normalizeText'
 import { calcularPrecoPeca, custoBasePorTipoPeca } from './pricingEngine'
 import { getSupabase } from './supabase'
-import type { Lead, PrecoRow, TecnicaEstampa } from './types'
+import { CONDICOES_PAGAMENTO_PADRAO, type CondicoesPagamento, type Lead, type PrecoRow, type TecnicaEstampa } from './types'
 
 export { normalizePeca }
 
@@ -119,4 +119,12 @@ export async function fetchTabelaPrecos(): Promise<PrecoRow[]> {
     .order('quantidade_min')
   if (error) throw error
   return (data ?? []) as PrecoRow[]
+}
+
+/** Condições de pagamento configuráveis no admin. Cai pro padrão se ainda não tiver rodado a migração. */
+export async function fetchCondicoesPagamento(): Promise<CondicoesPagamento> {
+  const supabase = await getSupabase()
+  const { data, error } = await supabase.from('condicoes_pagamento').select('*').eq('id', 1).maybeSingle()
+  if (error || !data) return CONDICOES_PAGAMENTO_PADRAO
+  return data as CondicoesPagamento
 }

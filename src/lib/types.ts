@@ -1,4 +1,5 @@
 export type EstagioMarca = 'existente' | 'nova'
+export type FinalidadePeca = 'revenda' | 'nao_revenda'
 export type TecnicaEstampa = 'silk' | 'dtf' | 'indicacao'
 /** @deprecated Substituído por `modelagem` (catálogo de modelagens prontas). Mantido só pra leads antigos. */
 export type ModelagemStatus = 'pronta' | 'desenvolver'
@@ -10,6 +11,12 @@ export interface Lead {
   id?: string
   created_at?: string
   estagio_marca: EstagioMarca | null
+  /** Peça vai ser revendida pelo cliente ou é pra uso próprio/brinde/uniforme. */
+  finalidade_peca: FinalidadePeca | null
+  /** Nome da marca do cliente, pra relacionamento e conteúdo (fica visível no admin). */
+  nome_marca_cliente: string | null
+  /** Instagram da marca do cliente, ou "ainda não tem" em texto livre. */
+  instagram_marca_cliente: string | null
   tipo_peca: string | null
   quantidade: number | null
   tecnica_estampa: TecnicaEstampa | null
@@ -30,9 +37,14 @@ export interface Lead {
   aplicacoes: number | null
   /** Uma medida (largura x altura, cm) por aplicação de DTF — cada posição pode ter um tamanho de arte diferente. */
   aplicacoes_detalhe: { largura_cm: number; altura_cm: number }[] | null
+  /** Cliente pulou o tamanho exato da estampa, decide com a Kodara no WhatsApp. */
+  estampa_medida_indefinida: boolean | null
   cores: string | null
   grade_tamanhos: GradeTamanhos | null
+  /** Cliente pulou a divisão exata da grade, decide com a Kodara no WhatsApp. */
+  grade_indefinida: boolean | null
   tem_arte: boolean | null
+  /** @deprecated O quiz não sobe mais arquivo (o cliente manda a arte pelo WhatsApp). Mantido só por leads antigos que já subiram arquivo. */
   arquivo_estampa_url: string | null
   posicao_tamanho_estampa: string | null
   prazo_desejado: string | null
@@ -62,6 +74,24 @@ export interface Lead {
   updated_at?: string
 }
 
+/** Singleton editável no admin, sem precisar mexer em código quando a taxa da maquininha mudar. */
+export interface CondicoesPagamento {
+  id: number
+  parcelamento_max: number
+  /** null = a Kodara ainda não confirmou esse número. Não inventar, mostrar sem percentual até preencher. */
+  taxa_maquininha_pct: number | null
+  desconto_avista_pct: number
+  entrada_pct: number
+}
+
+export const CONDICOES_PAGAMENTO_PADRAO: CondicoesPagamento = {
+  id: 1,
+  parcelamento_max: 12,
+  taxa_maquininha_pct: null,
+  desconto_avista_pct: 3,
+  entrada_pct: 50,
+}
+
 export interface PrecoRow {
   id: string
   tecnica: 'silk' | 'dtf'
@@ -74,6 +104,9 @@ export interface PrecoRow {
 
 export const emptyLead: Lead = {
   estagio_marca: null,
+  finalidade_peca: null,
+  nome_marca_cliente: null,
+  instagram_marca_cliente: null,
   tipo_peca: null,
   quantidade: null,
   tecnica_estampa: null,
@@ -86,8 +119,10 @@ export const emptyLead: Lead = {
   estampa_altura_cm: null,
   aplicacoes: null,
   aplicacoes_detalhe: null,
+  estampa_medida_indefinida: null,
   cores: null,
   grade_tamanhos: null,
+  grade_indefinida: null,
   tem_arte: null,
   arquivo_estampa_url: null,
   posicao_tamanho_estampa: null,
@@ -129,6 +164,11 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
 export const ESTAGIO_LABEL: Record<EstagioMarca, string> = {
   existente: 'Marca já rodando',
   nova: 'Começando do zero',
+}
+
+export const FINALIDADE_LABEL: Record<FinalidadePeca, string> = {
+  revenda: 'Pra revenda',
+  nao_revenda: 'Uso próprio / brinde / evento / uniforme',
 }
 
 /** Modelagens de camiseta já prontas da Kodara. O cliente escolhe, não desenvolve do zero. */

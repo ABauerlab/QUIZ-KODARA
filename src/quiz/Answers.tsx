@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { env } from '../lib/env'
 import { isValidCep, isValidPhone, maskCep, maskPhone } from '../lib/format'
 import { MODELAGENS_CAMISA, TECIDOS_CAMISA, type GradeTamanhos, type Lead } from '../lib/types'
-import { MSG_ETIQUETA, MSG_QUALIDADE } from './steps'
+import { MSG_ETIQUETA, MSG_GRADE_INDEFINIDA, MSG_QUALIDADE } from './steps'
 
 export type Advance = (patch: Partial<Lead>, userText: string, interstitial?: string[]) => void
 
@@ -69,6 +69,50 @@ function FreeText({
         {cta}
       </button>
     </form>
+  )
+}
+
+export function P1A({ advance }: Props) {
+  return (
+    <Options>
+      <button
+        className="btn"
+        onClick={() =>
+          advance({ finalidade_peca: 'revenda' }, 'Pra revenda (vender pronta pros meus clientes)')
+        }
+      >
+        Pra revenda (vender pronta pros meus clientes)
+      </button>
+      <button
+        className="btn"
+        onClick={() =>
+          advance(
+            { finalidade_peca: 'nao_revenda' },
+            'Não é pra revenda (uso próprio, brinde, evento, uniforme...)',
+          )
+        }
+      >
+        Não é pra revenda (uso próprio, brinde, evento, uniforme...)
+      </button>
+    </Options>
+  )
+}
+
+export function P1B({ advance }: Props) {
+  return (
+    <FreeText
+      placeholder="Nome da sua marca"
+      onSubmit={(v) => advance({ nome_marca_cliente: v }, v)}
+    />
+  )
+}
+
+export function P1C({ advance }: Props) {
+  return (
+    <FreeText
+      placeholder="@suamarca, ou 'ainda não tenho'"
+      onSubmit={(v) => advance({ instagram_marca_cliente: v }, v)}
+    />
   )
 }
 
@@ -312,7 +356,7 @@ export function P7({ lead, advance }: Props) {
         const texto = Object.entries(final)
           .map(([t, q]) => `${t}: ${q}`)
           .join(' | ')
-        advance({ grade_tamanhos: final }, texto)
+        advance({ grade_tamanhos: final, grade_indefinida: false }, texto)
       }}
     >
       <div className="grid gap-2 rounded-2xl border border-line bg-panel p-3">
@@ -354,6 +398,19 @@ export function P7({ lead, advance }: Props) {
       </p>
       <button className="btn-primary" disabled={!total}>
         Continuar
+      </button>
+      <button
+        type="button"
+        className="text-center text-sm text-mute underline"
+        onClick={() =>
+          advance(
+            { grade_tamanhos: null, grade_indefinida: true },
+            'Não sei a divisão exata ainda, decido com a Kodara',
+            [MSG_GRADE_INDEFINIDA],
+          )
+        }
+      >
+        Não sei a divisão exata ainda, decido com a Kodara no WhatsApp
       </button>
     </form>
   )
@@ -468,6 +525,7 @@ function P9DDtf({ advance }: Pick<Props, 'advance'>) {
             aplicacoes_detalhe: parsed,
             estampa_largura_cm: parsed[0].largura_cm,
             estampa_altura_cm: parsed[0].altura_cm,
+            estampa_medida_indefinida: false,
           },
           texto,
         )
@@ -507,6 +565,25 @@ function P9DDtf({ advance }: Pick<Props, 'advance'>) {
       ))}
       <button className="btn-primary" disabled={!medidasOk}>
         Continuar
+      </button>
+      <button
+        type="button"
+        className="text-center text-sm text-mute underline"
+        onClick={() =>
+          advance(
+            {
+              aplicacoes: null,
+              aplicacoes_detalhe: null,
+              estampa_largura_cm: null,
+              estampa_altura_cm: null,
+              estampa_medida_indefinida: true,
+            },
+            'Não sei o tamanho exato, a Kodara me ajuda a definir',
+            [MSG_GRADE_INDEFINIDA],
+          )
+        }
+      >
+        Não sei o tamanho exato, a Kodara me ajuda a definir
       </button>
     </form>
   )

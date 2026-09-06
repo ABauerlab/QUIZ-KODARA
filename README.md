@@ -119,7 +119,19 @@ No painel do Supabase, abra o **SQL Editor** e rode **dois arquivos, nessa ordem
   mudança do nome da peça no quiz
 - atualiza `salvar_lead` pra gravar os campos novos
 
-Os cinco são idempotentes, rodar de novo não quebra nada.
+**`supabase/06-revenda-marca-pagamento-retomada.sql`** (revenda, marca do cliente, pagamento, retomada) cria:
+
+- os campos `finalidade_peca`, `nome_marca_cliente`, `instagram_marca_cliente`, `grade_indefinida` e
+  `estampa_medida_indefinida` no lead
+- a tabela `condicoes_pagamento` (singleton, editável no admin em Preços): parcelamento máximo, taxa
+  da maquininha (opcional — o quiz não inventa esse número, só avisa que é repassada até alguém
+  preencher), desconto à vista e percentual de entrada
+- a função `buscar_lead_por_sessao`, que deixa o quiz retomar de onde parou depois de um refresh no
+  meio do fluxo (o navegador já guarda o `session_id` no sessionStorage; essa função devolve só a
+  linha daquela sessão, nunca de outra)
+- atualiza `salvar_lead` pra gravar os campos novos
+
+Os seis são idempotentes, rodar de novo não quebra nada.
 
 ### 2. O que o RLS garante
 
@@ -533,11 +545,12 @@ Se o `.htaccess` não aparecer no gerenciador de arquivos, liga a opção de mos
 
 ## Como o fluxo se comporta
 
-- **Menos de 30 peças**: pula a pergunta de técnica, fixa DTF e avisa que DTF produz a partir de 1 peça.
-- **30 peças ou mais**: pergunta entre silk, DTF ou indicação da Kodara.
+- **Menos de 20 peças**: pula a pergunta de técnica, fixa DTF e avisa que DTF produz a partir de 1 peça.
+- **20 peças ou mais**: pergunta entre silk, DTF ou indicação da Kodara.
 - **Começando do zero**: menciona o Kit Marca uma vez e segue com a peça.
-- **Tem estampa pronta**: sobe o arquivo pro bucket privado. Se o upload falhar, oferece mandar pelo
-  WhatsApp e o quiz continua.
+- **Tem estampa pronta**: não sobe arquivo nenhum — o quiz só avisa que a arte é enviada depois,
+  direto no WhatsApp. O bucket privado `estampas` fica só pra leads antigos que já subiram arquivo
+  antes dessa mudança (o admin ainda consegue baixar os que já existem).
 - **CEP**: última pergunta, só pra cotar o frete. A cotação dispara na hora, então a tela final já abre
   com o número na maioria das vezes.
 - **Tela final**: espera o frete resolver, salva o lead completo no Supabase e só então libera o botão
@@ -565,7 +578,7 @@ src/
     useConversation.ts     fila de mensagens com o efeito de digitando
     Quiz.tsx               orquestra o fluxo
     Answers.tsx            a UI de resposta de cada pergunta
-    UploadEstampa.tsx      upload pro bucket privado
+    resumo.ts              lista única de campos respondidos, usada na tela final e na mensagem de WhatsApp
     Final.tsx              resumo, peças, frete, total, PIX e CTA (chunk separado)
   admin/                   painel, protegido por Auth (chunk separado)
 supabase/
