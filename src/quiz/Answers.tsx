@@ -214,7 +214,7 @@ export function P4({ advance }: Props) {
           )
         }
       >
-        Silk (ideal pra estampa única em volume maior, custo por peça menor)
+        Silk (ideal pra estampa única em volume maior)
       </button>
       <button
         className="btn"

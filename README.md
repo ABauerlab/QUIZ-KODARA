@@ -1,8 +1,10 @@
 # Quiz Private Label | Kodara Streetwear
 
 Agente de atendimento de Private Label da Kodara em formato de conversa. Qualifica o lead que vem do
-tráfego pago, calcula o valor da produção mais o frete real até o CEP da pessoa, mostra o PIX e joga
-ela no WhatsApp com tudo resumido. Quem abandona no meio fica registrado pra recontato.
+tráfego pago e joga ela no WhatsApp com o briefing completo resumido — peça, modelagem, cores, grade,
+estampa, prazo, tudo que a pessoa respondeu. O quiz não mostra preço nenhum: o valor é calculado e
+salvo por baixo dos panos (fica visível pro admin), mas quem fecha o número com o cliente é a Kodara,
+direto no WhatsApp. Quem abandona no meio fica registrado pra recontato.
 
 Roda em `quiz.vistakodara.com.br`, build estático subido por upload manual na Hostinger.
 
@@ -67,11 +69,11 @@ Arquivo `.env` na raiz, a partir do `.env.example`. Ele não vai pro git.
 | `VITE_SUPABASE_ANON_KEY` | Chave `anon` pública, mesma tela |
 | `VITE_META_PIXEL_ID` | Pixel da Kodara: `1200831484761221` |
 | `VITE_WHATSAPP_NUMBER` | Número no formato internacional sem símbolo: `553132232356` |
-| `VITE_PIX_KEY` | Chave PIX mostrada na tela final |
+| `VITE_PIX_KEY` | Chave PIX visível só pro admin logado (Preços), não aparece pro cliente no quiz |
 | `VITE_PRIVACY_URL` | Opcional. Link da política de privacidade. Sem ela, o aviso de uso dos dados continua aparecendo, só que sem link |
 
 Essas variáveis entram no bundle na hora do build. Trocou alguma, roda `npm run build` de novo e sobe
-o `dist/` atualizado. Isso vale principalmente pra chave PIX.
+o `dist/` atualizado.
 
 Nunca coloque a `service_role` key no `.env`. Ela ignora todas as regras de segurança e o `.env` do
 Vite vai parar no navegador.
@@ -486,12 +488,13 @@ só baixa quando o navegador fica ocioso ou no primeiro toque, pra não competir
 | `PageView` | ao abrir (só Pixel, não passa pela Conversions API) |
 | `QuizStarted` | clique em "Bora começar" |
 | `Lead` | preencheu nome e WhatsApp na P11 |
-| `InitiateCheckout` | tela final de resumo e valor apareceu |
+| `InitiateCheckout` | chegou na tela final e o resumo terminou de calcular |
 | `QuizCompleted` | lead gravado no Supabase |
 | `WhatsAppRedirect` | clique no botão final, antes de redirecionar |
 
 `Lead`, `InitiateCheckout` e `QuizCompleted` mandam `value` e `currency: BRL` quando o valor foi
-calculado, pra o Meta aprender a priorizar lead de ticket maior. Se o valor caiu em "sob consulta", o
+calculado por baixo dos panos (o cliente não vê esse número na tela, ele só existe pro Meta e pro
+admin), pra o Meta aprender a priorizar lead de ticket maior. Se o valor caiu em "sob consulta", o
 evento vai sem `value` em vez de mandar zero e envenenar o aprendizado.
 
 `InitiateCheckout` e `QuizCompleted` esperam o frete resolver antes de disparar, então o `value` deles
@@ -584,7 +587,7 @@ src/
     Quiz.tsx               orquestra o fluxo
     Answers.tsx            a UI de resposta de cada pergunta
     resumo.ts              lista única de campos respondidos, usada na tela final e na mensagem de WhatsApp
-    Final.tsx              resumo, peças, frete, total, PIX e CTA (chunk separado)
+    Final.tsx              resumo do briefing, Kit Marca e CTA pro WhatsApp (chunk separado, sem preço)
   admin/                   painel, protegido por Auth (chunk separado)
 supabase/
   schema.sql               tabelas, RLS, bucket e linhas de exemplo
