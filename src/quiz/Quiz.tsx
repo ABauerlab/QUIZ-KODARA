@@ -96,8 +96,9 @@ export default function Quiz() {
     })
   }, [pushBot])
 
-  // Busca a tabela de precos assim que a peca e a quantidade existem, pra que o
-  // valor ja esteja calculado quando o Lead for disparado na P11.
+  // Busca a tabela de precos assim que a peca e a quantidade existem, pra que
+  // o preco interno ja va calculado no lead salvo (o Lead do pixel dispara
+  // antes disso, na P0, junto com nome e WhatsApp).
   useEffect(() => {
     if (!lead.tipo_peca || !lead.quantidade || precos.length) return
     fetchTabelaPrecos()
@@ -179,7 +180,7 @@ export default function Quiz() {
     // etapa a etapa no Gerenciador de Eventos (current !== 'abertura' aqui sempre).
     pixel.quizStepCompleted(current)
 
-    if (current === 'p11') {
+    if (current === 'p0') {
       pixel.lead(
         preco.total,
         { nome: proximoLead.nome, whatsapp: proximoLead.whatsapp },
@@ -310,6 +311,7 @@ export default function Quiz() {
                   Bora começar
                 </button>
               )}
+              {current === 'p0' && <A.P0 lead={lead} advance={advance} />}
               {current === 'p1' && (
                 <div className="grid gap-2">
                   <button
@@ -348,7 +350,6 @@ export default function Quiz() {
               {current === 'p9' && <A.P9 lead={lead} advance={advance} />}
               {current === 'p9d' && <A.P9D lead={lead} advance={advance} />}
               {current === 'p10' && <A.P10 lead={lead} advance={advance} />}
-              {current === 'p11' && <A.P11 lead={lead} advance={advance} />}
               {current === 'p12' && <A.P12 lead={lead} advance={advance} />}
 
               {/* Além do chevron discreto no header, o botão de voltar
