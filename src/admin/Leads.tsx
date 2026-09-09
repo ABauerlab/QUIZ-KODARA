@@ -200,16 +200,46 @@ function Detalhe({
   )
 }
 
+/** Lista única de wa.me por número, sem duplicar quem preencheu o WhatsApp mais de uma vez. */
+function listaWhatsapp(lista: Lead[]): string {
+  const vistos = new Set<string>()
+  const links: string[] = []
+  for (const l of lista) {
+    const digitos = l.whatsapp ? phoneDigits(l.whatsapp) : ''
+    if (!digitos || vistos.has(digitos)) continue
+    vistos.add(digitos)
+    links.push(`https://wa.me/55${digitos}`)
+  }
+  return links.join('\n')
+}
+
+function useCopiar() {
+  const [copiado, setCopiado] = useState<string | null>(null)
+  async function copiar(chave: string, texto: string) {
+    if (!texto) return
+    try {
+      await navigator.clipboard.writeText(texto)
+      setCopiado(chave)
+      setTimeout(() => setCopiado(null), 2000)
+    } catch {
+      setCopiado(null)
+    }
+  }
+  return { copiado, copiar }
+}
+
 export default function Leads({ supabase }: { supabase: SupabaseClient }) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [aberto, setAberto] = useState<string | null>(null)
 
+  const [busca, setBusca] = useState('')
   const [estagio, setEstagio] = useState<FiltroEstagio>('todos')
   const [tecnica, setTecnica] = useState<FiltroTecnica>('todas')
   const [arte, setArte] = useState<FiltroArte>('todos')
   const [status, setStatus] = useState<FiltroStatus>('todos')
+  const { copiado, copiar } = useCopiar()
 
   async function marcarContatado(id: string) {
     const { error } = await supabase.from('leads').update({ status: 'contatado' }).eq('id', id)
@@ -224,7 +254,7 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(500)
+      .limit(2000)
       .then(({ data, error }) => {
         if (cancelado) return
         if (error) setErro(error.message)
@@ -244,18 +274,78 @@ export default function Leads({ supabase }: { supabase: SupabaseClient }) {
         if (arte === 'sim' && !l.tem_arte) return false
         if (arte === 'nao' && l.tem_arte) return false
         if (status !== 'todos' && l.status !== status) return false
+        if (busca.trim()) {
+          const q = busca.trim().toLowerCase()
+          const alvo = [l.nome, l.whatsapp, l.nome_marca_cliente, l.instagram_marca_cliente]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+          if (!alvo.includes(q)) return false
+        }
         return true
       }),
-    [leads, estagio, tecnica, arte, status],
+    [leads, estagio, tecnica, arte, status, busca],
   )
 
   const incompletos = leads.filter((l) => l.status === 'incompleto').length
+  const completos = leads.filter((l) => l.status === 'completo').length
+  const contatados = leads.filter((l) => l.status === 'contatado').length
+  const comWhatsapp = leads.filter((l) => l.whatsapp).length
 
   if (carregando) return <p className="text-sm text-mute">Carregando leads...</p>
   if (erro) return <p className="text-sm text-red-400">Erro ao carregar: {erro}</p>
 
   return (
     <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="rounded-2xl border border-line bg-panel p-3">
+          <p className="text-2xl font-bold">{leads.length}</p>
+          <p className="text-xs text-mute">Leads no total</p>
+        </div>
+        <div className="rounded-2xl border border-line bg-panel p-3">
+          <p className="text-2xl font-bold">{incompletos}</p>
+          <p className="text-xs text-mute">Abandonaram no meio</p>
+        </div>
+        <div className="rounded-2xl border border-line bg-panel p-3">
+          <p className="text-2xl font-bold">{completos}</p>
+          <p className="text-xs text-mute">Terminaram, não contatados</p>
+        </div>
+        <div className="rounded-2xl border border-line bg-panel p-3">
+          <p className="text-2xl font-bold">{contatados}</p>
+          <p className="text-xs text-mute">Já contatados</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-white/15 bg-white/[0.03] p-3">
+        <button
+          className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-ink"
+          onClick={() => void copiar('todos', listaWhatsapp(leads))}
+        >
+          {copiado === 'todos'
+            ? 'Copiado!'
+            : `Copiar todos os números (wa.me) — ${comWhatsapp}`}
+        </button>
+        <button
+          className="rounded-full border border-line px-4 py-2 text-sm"
+          onClick={() => void copiar('filtrados', listaWhatsapp(filtrados))}
+        >
+          {copiado === 'filtrados'
+            ? 'Copiado!'
+            : `Copiar números filtrados — ${filtrados.filter((l) => l.whatsapp).length}`}
+        </button>
+        <p className="w-full text-xs text-mute">
+          "Todos" pega todo mundo que já preencheu o WhatsApp no quiz, mesmo quem abandonou no meio
+          — cola direto numa lista de remarketing. "Filtrados" respeita os filtros abaixo.
+        </p>
+      </div>
+
+      <input
+        className="field py-2"
+        placeholder="Buscar por nome, WhatsApp, marca ou Instagram"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
+
       <div className="flex flex-wrap gap-2">
         {(
           [

@@ -37,12 +37,3 @@ export function capturarUtm(): Utm | null {
     return null
   }
 }
-
-/** Tag curta e discreta pra fechar a mensagem de WhatsApp, ex: "camp-verao/anuncio-1". */
-export function utmParaTag(utm: Utm | null): string {
-  if (!utm) return ''
-  const partes = [utm.utm_campaign, utm.utm_content].filter(Boolean)
-  if (partes.length) return partes.join('/')
-  const fallback = [utm.utm_source, utm.utm_medium].filter(Boolean)
-  return fallback.join('/')
-}

@@ -4,7 +4,6 @@ import { env } from '../lib/env'
 import { salvarCompleto } from '../lib/leadStore'
 import { pixel } from '../lib/pixel'
 import { KIT_MARCA_ITENS, type Lead } from '../lib/types'
-import { utmParaTag } from '../lib/utm'
 import type { FreteState } from './Quiz'
 import { resumoLead } from './resumo'
 
@@ -27,35 +26,24 @@ function Linha({ label, value }: { label: string; value: string }) {
 /**
  * Monta a mensagem de WhatsApp a partir da MESMA lista de campos (resumoLead)
  * que preenche o card "Fechando aqui", pra nunca mais desatualizar quando uma
- * pergunta nova entrar no quiz. Sem preço nenhum de propósito: o cliente chega
- * no WhatsApp só com o briefing completo, o valor é passado por lá.
+ * pergunta nova entrar no quiz. Sem preço nenhum de propósito: é o primeiro
+ * contato do cliente com a Kodara contando tudo o que ele já decidiu no quiz —
+ * o valor é combinado depois, direto na conversa.
  */
 function mensagemWhats(lead: Lead, kitItens: string[], kitOutros: string) {
   const respostas = resumoLead(lead)
     .filter((c) => c.value !== null)
-    .map((c) => `${c.label}: ${c.value}`)
+    .map((c) => `*${c.label}:* ${c.value}`)
 
   const linhas = [
-    'Fala Kodara! Acabei de fechar meu briefing no quiz de Private Label.',
+    'Fala Kodara! Acabei de fechar meu briefing no quiz de Private Label. Segue tudo o que eu já decidi:',
     '',
     ...respostas,
     kitItens.length
-      ? `Kit Marca: ${kitItens.map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c).join(', ')}`
+      ? `*Kit Marca:* ${kitItens.map((c) => KIT_MARCA_ITENS.find((i) => i.chave === c)?.label ?? c).join(', ')}`
       : null,
-    kitOutros.trim() ? `Outros materiais gráficos: ${kitOutros.trim()}` : null,
+    kitOutros.trim() ? `*Outros materiais gráficos:* ${kitOutros.trim()}` : null,
   ].filter((l): l is string => l !== null)
-
-  // Tag discreta de origem (utm_campaign/utm_content), só aparece quando o
-  // quiz foi aberto a partir de um link com UTM — não polui a mensagem de
-  // quem chegou direto ou por indicação.
-  const tagUtm = utmParaTag({
-    utm_source: lead.utm_source ?? undefined,
-    utm_medium: lead.utm_medium ?? undefined,
-    utm_campaign: lead.utm_campaign ?? undefined,
-    utm_content: lead.utm_content ?? undefined,
-    utm_term: lead.utm_term ?? undefined,
-  })
-  if (tagUtm) linhas.push('', `[ref: ${tagUtm}]`)
 
   return encodeURIComponent(linhas.join('\n'))
 }
