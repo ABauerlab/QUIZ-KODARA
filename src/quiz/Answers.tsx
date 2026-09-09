@@ -617,7 +617,7 @@ export function P10({ advance }: Props) {
   )
 }
 
-export function P11({ advance }: Props) {
+export function P0({ advance }: Props) {
   const [nome, setNome] = useState('')
   const [tel, setTel] = useState('')
   const ok = nome.trim().length >= 2 && isValidPhone(tel)

@@ -369,7 +369,9 @@ veio nunca apaga o que já estava gravado.
 ### No painel
 
 A aba **Leads** ganhou botões de status no topo, com contador de incompletos. Em "Incompletos" você vê
-quem parou, **em qual pergunta parou** e o WhatsApp, se a pessoa chegou até a P11 antes de sair.
+quem parou e **em qual pergunta parou**. Como nome e WhatsApp agora são a primeira coisa perguntada
+(P0), praticamente todo abandono já chega com contato pra você fazer remarketing — mesmo quem saiu
+depois de responder uma única pergunta.
 
 Abrindo o lead tem o botão **Copiar mensagem de recontato**, com este texto:
 
@@ -394,9 +396,9 @@ coisas pedem isso:
 
 O quiz cobre os dois pontos:
 
-- Um aviso curto aparece na P11 (nome e WhatsApp), o momento em que a pessoa entrega o dado mais
-  sensível: *"Seus dados servem só pra fechar sua produção, a gente não vende nem compartilha com
-  terceiros."*
+- Um aviso curto aparece na P0 (nome e WhatsApp, a primeira pergunta do quiz), o momento em que a
+  pessoa entrega o dado mais sensível: *"Seus dados servem só pra fechar sua produção, a gente não
+  vende nem compartilha com terceiros."*
 - Um link **Privacidade** fica no header, visível desde a primeira tela, pra satisfazer o requisito do
   Meta de a página ter a política acessível, não só no momento da coleta.
 
@@ -487,7 +489,7 @@ só baixa quando o navegador fica ocioso ou no primeiro toque, pra não competir
 | --- | --- |
 | `PageView` | ao abrir (só Pixel, não passa pela Conversions API) |
 | `QuizStarted` | clique em "Bora começar" |
-| `Lead` | preencheu nome e WhatsApp na P11 |
+| `Lead` | preencheu nome e WhatsApp na P0, a primeira pergunta do quiz |
 | `InitiateCheckout` | chegou na tela final e o resumo terminou de calcular |
 | `QuizCompleted` | lead gravado no Supabase |
 | `WhatsAppRedirect` | clique no botão final, antes de redirecionar |
@@ -498,8 +500,9 @@ admin), pra o Meta aprender a priorizar lead de ticket maior. Se o valor caiu em
 evento vai sem `value` em vez de mandar zero e envenenar o aprendizado.
 
 `InitiateCheckout` e `QuizCompleted` esperam o frete resolver antes de disparar, então o `value` deles
-é o total que a pessoa vai pagar mesmo, peças mais frete. O `Lead` sai na P11, antes do CEP, então
-leva só o valor das peças.
+é o total que a pessoa vai pagar mesmo, peças mais frete. O `Lead` agora sai na P0, antes de qualquer
+outra pergunta — nesse momento a peça e a quantidade ainda não foram respondidas, então na prática
+esse evento quase sempre vai sem `value`.
 
 ### Como funciona o lado servidor
 
@@ -507,8 +510,8 @@ leva só o valor das peças.
 
 - `fbq(kind, name, payload, { eventID })` pro navegador
 - `src/lib/capi.ts` faz um `fetch(..., { keepalive: true })` pra `capi-evento` com o mesmo `event_id`,
-  mais `nome`/`whatsapp` (quando já coletados, a partir da P11), os cookies `_fbp`/`_fbc` (se
-  existirem) e o `session_id` da sessão
+  mais `nome`/`whatsapp` (quando já coletados, a partir da P0 — ou seja, desde o início do quiz), os
+  cookies `_fbp`/`_fbc` (se existirem) e o `session_id` da sessão
 
 `keepalive: true` importa porque `WhatsAppRedirect` dispara bem antes de `window.location.href`
 navegar pra fora da página — sem isso, o navegador cancelaria a requisição no meio.
@@ -519,7 +522,8 @@ A Edge Function `capi-evento` (`supabase/functions/capi-evento/index.ts`):
    código de país (formato brasileiro local); a função completa com `55` antes de hashear. PII crua
    nunca sai do Supabase, só o hash.
 2. Usa `session_id` hasheado como `external_id` — chave de match adicional, sempre presente mesmo
-   antes da P11 (quando ainda não há nome/telefone).
+   antes da P0 (o intervalo entre abrir o quiz e clicar em "Bora começar", quando ainda não há
+   nome/telefone).
 3. Pega `client_ip_address` do header `x-forwarded-for` e `client_user_agent` do próprio header da
    requisição (não confia no que o cliente diz que é seu user-agent, usa o que o servidor recebeu).
 4. Manda pra `https://graph.facebook.com/v21.0/{pixel_id}/events` com o `access_token` dos secrets.

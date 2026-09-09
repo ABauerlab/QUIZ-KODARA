@@ -2,6 +2,7 @@ import { isCamiseta } from '../lib/pricing'
 import type { Lead } from '../lib/types'
 
 export type StepId =
+  | 'p0'
   | 'p1'
   | 'p1a'
   | 'p1b'
@@ -17,7 +18,6 @@ export type StepId =
   | 'p9'
   | 'p9d'
   | 'p10'
-  | 'p11'
   | 'p12'
   | 'final'
 
@@ -30,6 +30,14 @@ export interface StepDef {
 }
 
 export const STEPS: StepDef[] = [
+  {
+    id: 'p0',
+    prompts: [
+      'Antes de mais nada: como posso te chamar, e qual seu WhatsApp?',
+      'Assim, se você precisar sair no meio da conversa, eu consigo continuar o papo com você depois, em vez de perder tudo que já foi respondido.',
+    ],
+    counts: true,
+  },
   {
     id: 'p1',
     prompts: ['Você já tem uma marca rodando ou tá começando agora?'],
@@ -78,11 +86,6 @@ export const STEPS: StepDef[] = [
   { id: 'p9', prompts: ['Onde vai a estampa?'], counts: true },
   { id: 'p9d', prompts: ['Só mais um detalhe técnico da estampa, pra fechar seu briefing certinho:'], counts: true },
   { id: 'p10', prompts: ['Pra quando você precisa que essa produção esteja pronta?'], counts: true },
-  {
-    id: 'p11',
-    prompts: ['Show, já tenho quase tudo. Como posso te chamar, e qual seu WhatsApp?'],
-    counts: true,
-  },
   {
     id: 'p12',
     prompts: ['Qual seu CEP pra eu calcular o frete certinho?'],
@@ -154,6 +157,7 @@ export const MSG_ETIQUETA =
 
 /** Rótulo curto de cada etapa, pro painel dizer onde a pessoa parou. */
 export const ETAPA_LABEL: Record<string, string> = {
+  p0: 'Nome e WhatsApp',
   p1: 'Estágio da marca',
   p1a: 'Finalidade',
   p1b: 'Nome da marca',
@@ -169,7 +173,6 @@ export const ETAPA_LABEL: Record<string, string> = {
   p9: 'Posição da estampa',
   p9d: 'Detalhe técnico da estampa',
   p10: 'Prazo',
-  p11: 'Nome e WhatsApp',
   p12: 'CEP do frete',
   final: 'Chegou no resumo',
 }
