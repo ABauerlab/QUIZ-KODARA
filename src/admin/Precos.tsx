@@ -51,8 +51,9 @@ function CondicoesPagamentoCard({ supabase }: { supabase: SupabaseClient }) {
     <div className="rounded-2xl border border-line bg-panel p-3">
       <p className="font-semibold">Condições de pagamento</p>
       <p className="mt-1 text-xs text-mute">
-        Aparecem na tela final do quiz e na mensagem de WhatsApp. A taxa da maquininha varia por
-        parcela — deixe em branco a que não tiver confirmada ainda, o quiz não chuta percentual.
+        Uso interno só pra referência no atendimento — o cliente não vê nenhum desses valores no
+        quiz nem na mensagem de WhatsApp, o preço é sempre combinado direto na conversa. A taxa da
+        maquininha varia por parcela — deixe em branco a que não tiver confirmada ainda.
       </p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <label className="grid gap-1 text-xs text-mute">
