@@ -202,7 +202,7 @@ export const KIT_MARCA_ITENS: KitMarcaItem[] = [
   {
     chave: 'ziplock',
     label: 'Ziplock personalizado',
-    descricao: 'R$ 2,00 por unidade, uma pra cada peça do seu pedido',
+    descricao: 'Uma unidade pra cada peça do seu pedido',
     preco: null,
   },
 ]

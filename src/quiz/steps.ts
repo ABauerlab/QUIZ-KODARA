@@ -76,7 +76,7 @@ export const STEPS: StepDef[] = [
   { id: 'p7', prompts: ['Quais tamanhos e quantas peças por tamanho?'], counts: true },
   { id: 'p8', prompts: ['Você já tem uma estampa pronta?'], counts: true },
   { id: 'p9', prompts: ['Onde vai a estampa?'], counts: true },
-  { id: 'p9d', prompts: ['Só mais um detalhe técnico da estampa, pra fechar o valor certinho:'], counts: true },
+  { id: 'p9d', prompts: ['Só mais um detalhe técnico da estampa, pra fechar seu briefing certinho:'], counts: true },
   { id: 'p10', prompts: ['Pra quando você precisa que essa produção esteja pronta?'], counts: true },
   {
     id: 'p11',

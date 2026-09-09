@@ -217,11 +217,14 @@ front. Só defina esse secret se algum dia usar um pixel diferente.
 
 Três coisas que ainda são valor de exemplo, não da Kodara:
 
-1. **Tabela de preços.** As linhas do `schema.sql` vêm marcadas "EXEMPLO, substituir pelo valor real".
-   Troque em `/admin` > Tabela de preços. Enquanto não trocar, o quiz mostra valor de mentira.
+1. **Tabela de preços.** O quiz não mostra preço nenhum pro cliente (o valor é passado à mão no
+   WhatsApp), mas o custo real ainda é calculado e salvo por baixo dos panos pra aparecer no admin.
+   As linhas de exemplo do `schema.sql` vêm marcadas "EXEMPLO, substituir pelo valor real" — troque
+   em `/admin` > Tabela de preços pra esse número interno vir certo.
 2. **Pesos das peças.** Camiseta 0,2 kg e moletom 0,6 kg são aproximação. Pese e ajuste, senão o frete
    sai torto.
-3. **Chave PIX.** Confira se é a chave certa, ela aparece na tela final pro cliente pagar.
+3. **Chave PIX.** Confira se é a chave certa em `/admin` > Preços — ela não aparece mais pro cliente
+   no quiz, só serve de referência pro admin logado.
 4. **Política de privacidade.** Se `VITE_PRIVACY_URL` ainda estiver vazia, preencha antes de rodar
    tráfego pago no Meta. Página de captação de lead sem link de privacidade é motivo comum de anúncio
    reprovado.
